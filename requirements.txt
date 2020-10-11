@@ -1,0 +1,5 @@
+django
+pynetbox
+django-widget-tweaks
+proxmoxer
+netaddr
