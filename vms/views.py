@@ -29,7 +29,7 @@ def create(request):
         vm.vm_id = None
         vm.host_cluster = host_cluster
         vm.network = network
-        vm.status = "active"
+        vm.status = "new"
 
         ipv4 = IPNetwork(network.get_next_ip()['ipv4'])
         ipv6 = IPNetwork(network.get_next_ip()['ipv6'])
@@ -37,6 +37,7 @@ def create(request):
         vm.config = {
             "name": vm.name,
             "os_template": request.POST['os_template'],
+            "role": request.POST['role'],
             "hw": {
                 "memory": request.POST['memory'],
                 "cpu_cores": request.POST['cpu_cores'],
@@ -46,12 +47,12 @@ def create(request):
                 "vlan_id": network.vid(),
                 "ipv4": {
                     "ip": str(ipv4.ip),
-                    "netmask": ipv4.prefixlen,
+                    "prefixlen": ipv4.prefixlen,
                     "gw": str(ipv4[1])
                 },
                 "ipv6": {
                     "ip": str(ipv6.ip),
-                    "netmask": ipv6.prefixlen,
+                    "prefixlen": ipv6.prefixlen,
                     "gw": str(ipv6[1])
                 },
                 "domain": request.POST['domain']
@@ -60,8 +61,10 @@ def create(request):
 
         vm.save()
 
+        vm.update_netbox()
+
         job = Job(task="create_vm", status="new")
         job.description = "Create VM {} in {}".format(vm.name, vm.host_cluster)
-        job.job = vm.config
+        job.job = {**vm.config, **{"vm_id": vm.pk}}
         job.save()
         return HttpResponse(request.POST['name'])
