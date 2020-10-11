@@ -43,6 +43,7 @@ def create(request):
                 "os_disk": request.POST['os_disk'],
             },
             "config": {
+                "vlan_id": network.vid(),
                 "ipv4": {
                     "ip": str(ipv4.ip),
                     "netmask": ipv4.prefixlen,
