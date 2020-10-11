@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'v!rv367j9!lxb&i@x4)w23(-6jv!!x(um4%)xtu=belb&b%h86'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'v!rv367j9!lxb&i@x4)w23(-6jv!!x(um4%)xtu=belb&b%h86')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(' ')
 
 # Application definition
 
@@ -77,12 +77,24 @@ WSGI_APPLICATION = 'orc.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.environ.get('DB_NAME') is None:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': os.environ.get('DB_NAME'),
+            'USER': os.environ.get('DB_USER'),
+            'PASSWORD': os.environ.get('DB_PASSWORD'),
+            'HOST': os.environ.get('DB_HOST'),
+            'PORT': os.environ.get('DB_PORT', 5432),
+        }
+    }
 
 
 # Password validation
@@ -108,15 +120,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
@@ -128,11 +135,11 @@ STATICFILES_DIRS = [
 STATIC_URL = '/static/'
 
 # Netbox Config
-NETBOX_URL = "https://netbox.gathering.systems"
-NETBOX_TOKEN = "2398f271e9cbdf496ae2b47b45dc48e2a3da96b1"
+NETBOX_URL =  os.environ.get('NETBOX_URL', "http://localhost:8080")
+NETBOX_TOKEN = os.environ.get('NETBOX_TOKEN', "0123456789abcdef0123456789abcdef01234567")
 
 # Proxmox
-PROXMOX_URL = "https://pve.gathering.systems"
-PROXMOX_USERNAME = "orc@pve"
-PROXMOX_TOKEN_NAME = "test"
-PROXMOX_TOKEN_VALUE = "fb80d0ec-8ac5-486b-a409-21e01d2c2d80"
+PROXMOX_URL = os.environ.get('PROXMOX_URL', "https://pve.gathering.systems")
+PROXMOX_USERNAME = os.environ.get('PROXMOX_USERNAME', "orc@pve")
+PROXMOX_TOKEN_NAME = os.environ.get('PROXMOX_TOKEN_NAME', "test")
+PROXMOX_TOKEN_VALUE = os.environ.get('PROXMOX_TOKEN_VALUE', "fb80d0ec-8ac5-486b-a409-21e01d2c2d80")
