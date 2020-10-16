@@ -9,11 +9,10 @@ from jobs.models import Job
 from .forms import VmForm
 
 from netaddr import *
-from proxmoxer import ProxmoxAPI
 
 # Create your views here.
 def index(request):
-    return render(request, 'vms/index.html')
+    return render(request, 'vms/index.html', {'vms': Vm.objects.all()})
 
 def create(request):
     if request.method == "GET":
@@ -26,7 +25,7 @@ def create(request):
 
         vm = Vm()
         vm.name = request.POST['name']
-        vm.vm_id = None
+        vm.state = {}
         vm.host_cluster = host_cluster
         vm.network = network
         vm.status = "new"
@@ -58,13 +57,7 @@ def create(request):
                 "domain": request.POST['domain']
             }
         }
-
         vm.save()
 
-        vm.update_netbox()
-
-        job = Job(task="create_vm", status="new")
-        job.description = "Create VM {} in {}".format(vm.name, vm.host_cluster)
-        job.job = {**vm.config, **{"vm_id": vm.pk}}
-        job.save()
+        vm.refresh_state()
         return HttpResponse(request.POST['name'])
