@@ -79,11 +79,11 @@ class Vm(models.Model):
             job.job = {**self.config, **{"vm_id": self.pk}, **{"state": self.state}}
             job.save()
 
-        if 'vmid' in self.state['proxmox'] and self.state['proxmox']['vmid'] is not None:
+        if 'id' in self.state['proxmox'] and self.state['proxmox']['id'] is not None:
             vm = None
             for node in proxmox.nodes.get():
                 try:
-                    vm = proxmox.nodes(node['node']).qemu(self.state['proxmox']['vmid'])
+                    vm = proxmox.nodes(node['node']).qemu(self.state['proxmox']['id'])
                     if vm is not None:
                         status = vm.status().current.get()
                         config = vm.config().get()
