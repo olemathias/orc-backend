@@ -6,4 +6,5 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('new', views.create, name='new'),
     path('<int:id>', views.show, name='show'),
+    path('<int:id>/json', views.vm, name='vmjson'),
 ]
