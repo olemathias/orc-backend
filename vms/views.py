@@ -3,8 +3,8 @@ from django.http import HttpResponse
 from django.conf import settings
 
 
-from vms.models import Vm, HostCluster
-from ipam.models import Network
+from vms.models import Vm
+from ipam.models import Network, Environment
 from jobs.models import Job
 from .forms import VmForm
 
@@ -14,19 +14,23 @@ from netaddr import *
 def index(request):
     return render(request, 'vms/index.html', {'vms': Vm.objects.all()})
 
+def show(request, id):
+    vm = Vm.objects.get(pk=id)
+    return render(request, 'vms/show.html', {'vm': vm})
+
 def create(request):
     if request.method == "GET":
         form = VmForm()
         return render(request, 'vms/create.html', {'form': form})
     elif request.method == "POST":
 
-        host_cluster = HostCluster.objects.get(pk=request.POST['host_cluster'])
+        environment = Environment.objects.get(pk=request.POST['environment'])
         network = Network.objects.get(pk=request.POST['network'])
 
         vm = Vm()
         vm.name = request.POST['name']
         vm.state = {}
-        vm.host_cluster = host_cluster
+        vm.environment = environment
         vm.network = network
         vm.status = "new"
 
@@ -36,7 +40,7 @@ def create(request):
         vm.config = {
             "name": vm.name,
             "os_template": request.POST['os_template'],
-            "role": request.POST['role'],
+            "role": 1,
             "hw": {
                 "memory": request.POST['memory'],
                 "cpu_cores": request.POST['cpu_cores'],

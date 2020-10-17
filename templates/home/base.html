@@ -6,8 +6,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="">
-  <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
-  <meta name="generator" content="Jekyll v4.1.1">
   <title>orc - Page</title>
 
   <!-- Bootstrap core CSS -->
@@ -18,16 +16,19 @@
 </head>
 
 <body>
+
   <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-    <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">Orc <small>alpha 0.0.1</small></a>
+    <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="/">Orc <small>ALPHA</small></a>
+    {% if user.is_authenticated %}
     <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <ul class="navbar-nav px-3">
       <li class="nav-item text-nowrap">
-        <a class="nav-link" href="#">Sign out</a>
+        <a class="nav-link" href="{% url 'logout' %}">Sign out</a>
       </li>
     </ul>
+    {% endif %}
   </nav>
 
   <div class="container-fluid">
@@ -36,25 +37,22 @@
         <div class="sidebar-sticky pt-3">
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a class="nav-link active" href="#">
+              <a class="nav-link active" href="/">
                 Home
               </a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/networks">
-                Networks
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/host_clusters">
-                Host Clusters
-              </a>
-            </li>
+            {% if user.is_authenticated %}
             <li class="nav-item">
               <a class="nav-link" href="/vms">
                 VMs
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/admin">
+                Admin
+              </a>
+            </li>
+            {% endif %}
           </ul>
         </div>
       </nav>

@@ -4,17 +4,43 @@ from django.conf import settings
 import re
 import pynetbox
 
+class Environment(models.Model):
+    name = models.CharField(max_length=256)
+    config = models.JSONField()
+    state = models.JSONField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    nb_cluster = None
+
+    def netbox(self):
+        return pynetbox.api(
+            self.config['netbox']['url'],
+            token=self.config['netbox']['token']
+        )
+
+    def get_site_id(self):
+        self.fetch_from_netbox_cluster()
+        return self.nb_cluster.site.id
+
+    def get_cluster_id(self):
+        self.fetch_from_netbox_cluster()
+        return self.nb_cluster.id
+
+    def fetch_from_netbox_cluster(self):
+        if self.nb_cluster is None:
+            self.nb_cluster = self.netbox().virtualization.clusters.get(self.state['netbox']['cluster_id'])
+
+    def __str__(self):
+        return self.name
+
 # Create your models here.
 class Network(models.Model):
-    source_id = models.IntegerField()
-    role = models.CharField(max_length=16)
+    environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
+    config = models.JSONField()
+    state = models.JSONField()
     created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
-
-    nb = pynetbox.api(
-        settings.NETBOX_URL,
-        token=settings.NETBOX_TOKEN
-    )
     nb_vlan = None
     nb_prefixes = None
 
@@ -78,8 +104,8 @@ class Network(models.Model):
 
     def fetch_from_netbox_vlan(self):
         if self.nb_vlan is None:
-            self.nb_vlan = self.nb.ipam.vlans.get(self.source_id)
+            self.nb_vlan = self.environment.netbox().ipam.vlans.get(self.state['netbox']['id'])
 
     def fetch_from_netbox_prefixes(self):
         if self.nb_prefixes is None:
-            self.nb_prefixes = self.nb.ipam.prefixes.filter(vlan_id=self.source_id)
+            self.nb_prefixes = self.environment.netbox().ipam.prefixes.filter(vlan_id=self.state['netbox']['id'])

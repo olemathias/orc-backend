@@ -1,0 +1,28 @@
+{% extends 'home/base.html' %}
+{% load widget_tweaks %}
+{% block title %}Please sign in{% endblock %}
+{% block content %}
+
+<div class="container">
+    <div class="row">
+<form method="post">
+  {% csrf_token %}
+  {% for field in form %}
+    <div class="form-group">
+    {{ field.label_tag }}
+    {{ field|add_class:"form-control" }}
+
+    {% if field.help_text %}
+      <small id="emailHelp" class="form-text text-muted">{{ field.help_text }}</small>
+    {% endif %}
+
+    {% for error in field.errors %}
+      {{ error }}
+    {% endfor %}
+    </div>
+  {% endfor %}
+    <input type="submit" value="Login" class="btn btn-primary">
+</form>
+</div>
+</div>
+{% endblock %}
