@@ -1,50 +1,13 @@
 from django.db import models
 from django.conf import settings
-from ipam.models import Network
+from ipam.models import Network, Environment
 from jobs.models import Job
 
 import pynetbox
 import proxmoxer
 
-# Create your models here.
-class HostCluster(models.Model):
-    type = models.CharField(max_length=16)
-    name = models.CharField(max_length=256)
-    status = models.CharField(max_length=64)
-    netbox_cluster_id = models.IntegerField()
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    nb = pynetbox.api(
-        settings.NETBOX_URL,
-        token=settings.NETBOX_TOKEN
-    )
-    nb_cluster = None
-
-    def get_site_id(self):
-        self.fetch_from_netbox_cluster()
-        return self.nb_cluster.site.id
-
-    def fetch_from_netbox_cluster(self):
-        if self.nb_cluster is None:
-            self.nb_cluster = self.nb.virtualization.clusters.get(self.netbox_cluster_id)
-
-    def __str__(self):
-        return self.name
-
-class HostClusterNode(models.Model):
-    host_cluster = models.ForeignKey(HostCluster, on_delete=models.CASCADE)
-    name = models.CharField(max_length=256)
-    url = models.CharField(max_length=256)
-    status = models.CharField(max_length=64)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
-
 class Vm(models.Model):
-    host_cluster = models.ForeignKey(HostCluster, on_delete=models.CASCADE)
+    environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
     name = models.CharField(max_length=256)
     config = models.JSONField()
     state = models.JSONField()
@@ -52,10 +15,6 @@ class Vm(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    nb = pynetbox.api(
-        settings.NETBOX_URL,
-        token=settings.NETBOX_TOKEN
-    )
     def __str__(self):
         return self.name
 
@@ -71,10 +30,10 @@ class Vm(models.Model):
         vm = None
         if 'netbox' not in self.state:
             self.state['netbox'] = {}
-            vm = self.nb.virtualization.virtual_machines.create(
+            vm = self.environment.netbox().virtualization.virtual_machines.create(
                 name=self.name,
-                site=self.host_cluster.get_site_id(),
-                cluster=self.host_cluster.netbox_cluster_id,
+                site=self.environment.get_site_id(),
+                cluster=self.environment.get_cluster_id(),
                 role=self.config['role'],
                 vcpus=self.config['hw']['cpu_cores'],
                 memory=int(self.config['hw']['memory'])*1024,
@@ -85,20 +44,20 @@ class Vm(models.Model):
             self.save()
 
         if vm is None:
-            vm = self.nb.virtualization.virtual_machines.get(self.state['netbox']['id'])
+            vm = self.environment.netbox().virtualization.virtual_machines.get(self.state['netbox']['id'])
 
-        if self.nb.virtualization.interfaces.get(virtual_machine_id=vm.id, name="eth0") is None:
-            interface = self.nb.virtualization.interfaces.create(
+        if self.environment.netbox().virtualization.interfaces.get(virtual_machine_id=vm.id, name="eth0") is None:
+            interface = self.environment.netbox().virtualization.interfaces.create(
                 virtual_machine=vm.id,
                 name='eth0'
             )
-            ipv4 = self.nb.ipam.ip_addresses.create(
+            ipv4 = self.environment.netbox().ipam.ip_addresses.create(
                 assigned_object_type="virtualization.vminterface",
                 assigned_object_id=interface['id'],
                 address="{}/{}".format(self.config['config']['ipv4']['ip'], self.config['config']['ipv4']['prefixlen']),
                 status="active"
              )
-            ipv6 = self.nb.ipam.ip_addresses.create(
+            ipv6 = self.environment.netbox().ipam.ip_addresses.create(
                 assigned_object_type="virtualization.vminterface",
                 assigned_object_id=interface['id'],
                 address="{}/{}".format(self.config['config']['ipv6']['ip'], self.config['config']['ipv6']['prefixlen']),
@@ -116,8 +75,8 @@ class Vm(models.Model):
             self.state['proxmox'] = {"id": None}
             self.save()
             job = Job(task="create_vm", status="new")
-            job.description = "Create VM {} in {}".format(vm.name, vm.host_cluster)
-            job.job = {**vm.config, **{"vm_id": vm.pk}}
+            job.description = "Create VM {} in {}".format(self.name, self.environment)
+            job.job = {**self.config, **{"state": self.state}}
             job.save()
 
         if 'vmid' in self.state['proxmox'] and self.state['proxmox']['vmid'] is not None:

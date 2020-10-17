@@ -134,6 +134,9 @@ STATICFILES_DIRS = [
 
 STATIC_URL = '/static/'
 
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
 # Netbox Config
 NETBOX_URL =  os.environ.get('NETBOX_URL', "http://localhost:8080")
 NETBOX_TOKEN = os.environ.get('NETBOX_TOKEN', "0123456789abcdef0123456789abcdef01234567")

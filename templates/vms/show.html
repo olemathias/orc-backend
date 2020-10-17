@@ -1,0 +1,10 @@
+{% extends 'home/base.html' %}
+{% block title %}{{vm.name}}{% endblock %}
+
+{% load widget_tweaks %}
+
+{% block content %}
+{{vm.config}}
+{{vm.state}}
+
+{% endblock %}
