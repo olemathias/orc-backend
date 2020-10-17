@@ -76,7 +76,7 @@ class Vm(models.Model):
             self.save()
             job = Job(task="create_vm", status="new")
             job.description = "Create VM {} in {}".format(self.name, self.environment)
-            job.job = {**self.config, **{"state": self.state}}
+            job.job = {**self.config, **{"vm_id": self.pk}, **{"state": self.state}}
             job.save()
 
         if 'vmid' in self.state['proxmox'] and self.state['proxmox']['vmid'] is not None:

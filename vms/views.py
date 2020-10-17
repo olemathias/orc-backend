@@ -1,7 +1,8 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 
+from django.views.decorators.csrf import csrf_exempt
 
 from vms.models import Vm
 from ipam.models import Network, Environment
@@ -9,6 +10,7 @@ from jobs.models import Job
 from .forms import VmForm
 
 from netaddr import *
+import json
 
 # Create your views here.
 def index(request):
@@ -17,6 +19,26 @@ def index(request):
 def show(request, id):
     vm = Vm.objects.get(pk=id)
     return render(request, 'vms/show.html', {'vm': vm})
+
+@csrf_exempt
+def vm(request, id):
+    vm = Vm.objects.get(pk=id)
+    if request.method == "PATCH":
+        body = json.loads(request.body)
+        if 'state' in body:
+            vm.state = {**vm.state, **body['state']}
+        if 'config' in body:
+            vm.config = {**vm.config, **body['config']}
+        vm.save()
+
+    return JsonResponse({
+        "id": vm.pk,
+        "environment_id": vm.environment.pk,
+        "network_id": vm.network.id,
+        "name": vm.name,
+        "config": vm.config,
+        "state": vm.state
+    }, safe=False)
 
 def create(request):
     if request.method == "GET":
