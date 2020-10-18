@@ -136,13 +136,3 @@ STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-
-# Netbox Config
-NETBOX_URL =  os.environ.get('NETBOX_URL', "http://localhost:8080")
-NETBOX_TOKEN = os.environ.get('NETBOX_TOKEN', "0123456789abcdef0123456789abcdef01234567")
-
-# Proxmox
-PROXMOX_URL = os.environ.get('PROXMOX_URL', "185.80.182.113:443")
-PROXMOX_USERNAME = os.environ.get('PROXMOX_USERNAME', "orc@pve")
-PROXMOX_TOKEN_NAME = os.environ.get('PROXMOX_TOKEN_NAME', "test")
-PROXMOX_TOKEN_VALUE = os.environ.get('PROXMOX_TOKEN_VALUE', "fb80d0ec-8ac5-486b-a409-21e01d2c2d80")

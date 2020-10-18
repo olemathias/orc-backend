@@ -80,7 +80,7 @@ def create(request):
                     "prefixlen": ipv6.prefixlen,
                     "gw": str(ipv6[1])
                 },
-                "domain": request.POST['domain']
+                "domain": environment.config['domain']
             }
         }
         vm.save()

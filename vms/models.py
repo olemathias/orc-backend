@@ -3,9 +3,6 @@ from django.conf import settings
 from ipam.models import Network, Environment
 from jobs.models import Job
 
-import pynetbox
-import proxmoxer
-
 class Vm(models.Model):
     environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
     name = models.CharField(max_length=256)
@@ -67,10 +64,20 @@ class Vm(models.Model):
             vm.primary_ip6 = ipv6['id']
             vm.save()
 
-            return self.state['netbox']
+            if 'interface' not in self.state['netbox']:
+                self.state['netbox']['interface'] = []
+            self.state['netbox']['interface'].append({'id': interface['id'], 'name': interface['name']})
+
+            if 'ip_addresses' not in self.state['netbox']:
+                self.state['netbox']['ip_addresses'] = []
+            self.state['netbox']['ip_addresses'].append({'id': ipv4['id'], 'address': ipv4['address'], 'interface_id': ipv4['assigned_object_id']})
+            self.state['netbox']['ip_addresses'].append({'id': ipv6['id'], 'address': ipv6['address'], 'interface_id': ipv6['assigned_object_id']})
+            self.save()
+
+        return self.state['netbox']
 
     def update_proxmox(self):
-        proxmox = proxmoxer.ProxmoxAPI(settings.PROXMOX_URL, user=settings.PROXMOX_USERNAME, token_name=settings.PROXMOX_TOKEN_NAME, token_value=settings.PROXMOX_TOKEN_VALUE, verify_ssl=False)
+        proxmox = self.environment.proxmox()
         if 'proxmox' not in self.state:
             self.state['proxmox'] = {"id": None}
             self.save()
@@ -100,15 +107,54 @@ class Vm(models.Model):
         return self.state['proxmox']
 
     def update_powerdns(self):
-        # TODO Check and create/update powerdns records
-        pass
+        fqdn = "{}.{}.".format(self.name, self.environment.config['domain'])
+        if 'powerdns' not in self.state:
+            rrsets = []
+            rrsets.append({
+                "name": fqdn,
+                "changetype": "replace",
+                "type": "A",
+                "records": [{
+                    "content": self.config['config']['ipv4']['ip'],
+                    "disabled": False,
+                    "type": "A",
+                    "set-ptr": True
+                }],
+                "ttl": 900
+            })
+            rrsets.append({
+                "name": fqdn,
+                "changetype": "replace",
+                "type": "AAAA",
+                "records": [{
+                    "content": self.config['config']['ipv6']['ip'],
+                    "disabled": False,
+                    "type": "AAAA",
+                    "set-ptr": True
+                }],
+                "ttl": 900
+            })
+            print(self.environment.powerdns().set_records(rrsets))
+            self.state['powerdns'] = rrsets
+
+        return self.state['powerdns']
 
     def update_freeipa(self):
-        # TODO Check and create/update IPA Hosts to prepare for client-install
+        fqdn = "{}.{}".format(self.name, self.environment.config['domain'])
+        if 'freeipa' not in self.state:
+            client = self.environment.freeipa()
+            print(client.host_add(fqdn, o_ip_address=self.config['config']['ipv4']['ip']))
+            self.state['freeipa'] = {"fqdn": fqdn}
+            self.save()
         pass
 
     def update_awx(self):
-        # TODO Add host to AWX inventory, and check that is have the correct "playbooks"
+        fqdn = "{}.{}".format(self.name, self.environment.config['domain'])
+        if 'awx' not in self.state:
+            client = self.environment.awx()
+            client.create_host_in_inventory(inventory=self.environment.config['awx']['inventory'], name=fqdn, description="orc_managed", organization=self.environment.config['awx']['organization'])
+            self.state['awx'] = {"fqdn": fqdn, "inventory": self.environment.config['awx']['inventory']}
+            self.save()
         pass
 
     def update_monitoring(self):

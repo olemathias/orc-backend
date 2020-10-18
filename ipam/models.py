@@ -3,6 +3,10 @@ from django.conf import settings
 
 import re
 import pynetbox
+import proxmoxer
+import python_freeipa
+from towerlib import Tower
+from .pdns import PowerDNS
 
 class Environment(models.Model):
     name = models.CharField(max_length=256)
@@ -17,6 +21,26 @@ class Environment(models.Model):
             self.config['netbox']['url'],
             token=self.config['netbox']['token']
         )
+
+    def proxmox(self):
+        return proxmoxer.ProxmoxAPI(
+            self.config['proxmox']['url'],
+            user=self.config['proxmox']['user'],
+            token_name=self.config['proxmox']['token_name'],
+            token_value=self.config['proxmox']['token_value'],
+            verify_ssl=False
+        )
+
+    def powerdns(self):
+        return PowerDNS(self.config['powerdns']['url'], self.config['powerdns']['key'], self.config['domain'])
+
+    def freeipa(self):
+        client = python_freeipa.ClientMeta(host=self.config['freeipa']['host'], verify_ssl=False)
+        client.login(self.config['freeipa']['user'], self.config['freeipa']['password'])
+        return client
+
+    def awx(self):
+        return Tower(self.config['awx']['host'], self.config['awx']['user'], self.config['awx']['password'], secure=False)
 
     def get_site_id(self):
         self.fetch_from_netbox_cluster()
@@ -45,7 +69,10 @@ class Network(models.Model):
     nb_prefixes = None
 
     def __str__(self):
-        return "{} (VLAN: {}) - {} free IPs".format(self.name(), self.vid(), len(self.get_available_ips()))
+        available_ips = len(self.get_available_ips())
+        if available_ips == 50:
+            available_ips = "50+"
+        return "{} (VLAN: {}) - {} free IPs".format(self.name(), self.vid(), available_ips)
 
     def vid(self):
         self.fetch_from_netbox_vlan()
