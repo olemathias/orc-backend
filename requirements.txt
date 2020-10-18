@@ -3,5 +3,6 @@ pynetbox
 django-widget-tweaks
 proxmoxer
 netaddr
+psycopg2
 python-freeipa
 towerlib
