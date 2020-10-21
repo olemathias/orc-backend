@@ -6,3 +6,8 @@ netaddr
 psycopg2
 python-freeipa
 towerlib
+django_rq
+pyyaml
+paramiko
+scp
+django-auth-ldap
