@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 
@@ -7,10 +7,20 @@ from django.views.decorators.csrf import csrf_exempt
 from vms.models import Vm
 from ipam.models import Network, Environment
 from jobs.models import Job
-from .forms import VmForm
+from vms.forms import VmForm
+
+from vms.jobs import update_vm_job, delete_vm_job
 
 from netaddr import *
 import json
+
+from django.template.defaulttags import register
+
+@register.filter
+def get_item(dictionary, key):
+    if dictionary:
+        return dictionary.get(key)
+    return None
 
 # Create your views here.
 def index(request):
@@ -54,7 +64,6 @@ def create(request):
         vm.state = {}
         vm.environment = environment
         vm.network = network
-        vm.status = "new"
 
         ipv4 = IPNetwork(network.get_next_ip()['ipv4'])
         ipv6 = IPNetwork(network.get_next_ip()['ipv6'])
@@ -83,7 +92,33 @@ def create(request):
                 "domain": environment.config['domain']
             }
         }
-        vm.save()
 
-        vm.refresh_state()
-        return HttpResponse(request.POST['name'])
+        vm.config["awx_templates"] = {
+            "apt_update": {"id": 11, "name": "Apt Update/Upgrade", "trigger": {"after_state": ["netbox", "proxmox", "awx", "powerdns"]}},
+            "ipa_install": {"id": 10, "name": "Install IPAClient", "trigger": {"after_state": ["netbox", "proxmox", "awx", "freeipa", "powerdns"]}},
+            "docker_test": {"id": 12, "name": "Docker Test", "trigger": {"after_state": ["netbox", "proxmox", "awx", "freeipa", "powerdns"]}}
+        }
+
+        #vm.update_state()
+        vm.save()
+        update_vm_job.delay(vm.pk)
+        return redirect("/vms/{}".format(vm.pk))
+
+def delete(request, id):
+    vm = Vm.objects.get(pk=id)
+    delete_vm_job.delay(vm.pk)
+    return redirect("/vms".format(vm.pk))
+
+def update_state(request, id):
+    vm = Vm.objects.get(pk=id)
+    update_vm_job.delay(vm.pk)
+    return redirect("/vms/{}".format(vm.pk))
+
+def run_awx_template(request, id, template_name):
+    vm = Vm.objects.get(pk=id)
+    if template_name not in vm.config['awx_templates']:
+        return redirect("/vms/{}".format(vm.pk)) ## TODO Add Flash
+    template = vm.config['awx_templates'][template_name]
+    from vms.jobs import run_awx_template_job
+    run_awx_template_job.delay(vm.pk, template['id'], template_name)
+    return redirect("/vms/{}".format(vm.pk))

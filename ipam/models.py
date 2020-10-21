@@ -32,7 +32,7 @@ class Environment(models.Model):
         )
 
     def powerdns(self):
-        return PowerDNS(self.config['powerdns']['url'], self.config['powerdns']['key'], self.config['domain'])
+        return PowerDNS(self.config['powerdns']['url'], self.config['powerdns']['key'])
 
     def freeipa(self):
         client = python_freeipa.ClientMeta(host=self.config['freeipa']['host'], verify_ssl=False)

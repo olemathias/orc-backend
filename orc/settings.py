@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'ipam.apps.IpamConfig',
     'jobs.apps.JobsConfig',
     'widget_tweaks',
+    'django_rq',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +137,56 @@ STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 15,
+        'DEFAULT_TIMEOUT': 360,
+    }
+}
+
+
+
+##### LDAP #####
+import ldap
+from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
+
+# Baseline configuration.
+AUTH_LDAP_SERVER_URI = "ldap://ipa1.msbone.net"
+LDAP_IGNORE_CERT_ERRORS = True
+
+AUTH_LDAP_BIND_DN = "uid=orc,cn=users,cn=accounts,dc=msbone,dc=net"
+AUTH_LDAP_BIND_PASSWORD = "7NhsGN4y8Hmwq3sqjI6cLhI"
+AUTH_LDAP_USER_SEARCH = LDAPSearch(
+    "cn=users,cn=accounts,dc=msbone,dc=net", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+)
+
+# Populate the Django user from the LDAP directory.
+AUTH_LDAP_USER_ATTR_MAP = {
+    "first_name": "givenName",
+    "last_name": "sn",
+    "email": "mail",
+}
+
+# Set up the basic group parameters.
+AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
+    "cn=groups,cn=accounts,dc=msbone,dc=net",
+    ldap.SCOPE_SUBTREE,
+    "(objectClass=groupOfNames)",
+)
+AUTH_LDAP_GROUP_TYPE = GroupOfNamesType(name_attr="cn")
+
+AUTH_LDAP_USER_FLAGS_BY_GROUP = {
+    "is_active": "cn=admins,cn=groups,cn=accounts,dc=msbone,dc=net",
+    "is_staff": "cn=admins,cn=groups,cn=accounts,dc=msbone,dc=net",
+    "is_superuser": "cn=admins,cn=groups,cn=accounts,dc=msbone,dc=net",
+}
+
+# Keep ModelBackend around for per-user permissions and maybe a local
+# superuser.
+AUTHENTICATION_BACKENDS = (
+    "django_auth_ldap.backend.LDAPBackend",
+    "django.contrib.auth.backends.ModelBackend",
+)

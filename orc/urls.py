@@ -18,8 +18,12 @@ from django.urls import include, path
 
 urlpatterns = [
     path('', include('home.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),
     path('vms/', include('vms.urls')),
     path('jobs/', include('jobs.urls')),
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
+]
+
+urlpatterns += [
+    path('django-rq/', include('django_rq.urls'))
 ]

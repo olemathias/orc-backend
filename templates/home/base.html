@@ -1,3 +1,5 @@
+{% url 'home' as home_url %}
+{% url 'vms' as vms_url %}
 {% load static %}
 <!doctype html>
 <html lang="en">
@@ -17,7 +19,7 @@
 
 <body>
 
-  <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+  <nav class="navbar navbar-dark sticky-top bg-primary flex-md-nowrap p-0 shadow">
     <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="/">Orc <small>ALPHA</small></a>
     {% if user.is_authenticated %}
     <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,13 +39,13 @@
         <div class="sidebar-sticky pt-3">
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a class="nav-link active" href="/">
+              <a class="nav-link {% if request.path == home_url %} active {%endif%}" href="/">
                 Home
               </a>
             </li>
             {% if user.is_authenticated %}
             <li class="nav-item">
-              <a class="nav-link" href="/vms">
+              <a class="nav-link {% if request.path == vms_url %} active {%endif%}" href="/vms">
                 VMs
               </a>
             </li>
