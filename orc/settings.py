@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'jobs.apps.JobsConfig',
     'widget_tweaks',
     'django_rq',
+    'django_sass',
 ]
 
 MIDDLEWARE = [
