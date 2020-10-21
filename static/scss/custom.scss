@@ -1,3 +1,10 @@
+@import "bootstrap/scss/bootstrap";
+
+$fa-font-path: "../fontawesome/webfonts";
+@import "fontawesome/scss/fontawesome.scss";
+@import "fontawesome/scss/solid.scss";
+@import "fontawesome/scss/regular.scss";
+
 body {
   font-size: .875rem;
 }
@@ -7,10 +14,6 @@ body {
   height: 16px;
   vertical-align: text-bottom;
 }
-
-/*
- * Sidebar
- */
 
 .sidebar {
   position: fixed;
@@ -67,10 +70,6 @@ body {
   font-size: .75rem;
   text-transform: uppercase;
 }
-
-/*
- * Navbar
- */
 
 .navbar-brand {
   padding-top: .75rem;
