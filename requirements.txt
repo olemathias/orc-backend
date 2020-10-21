@@ -11,3 +11,4 @@ pyyaml
 paramiko
 scp
 django-auth-ldap
+django-login-required-middleware
