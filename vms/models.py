@@ -72,13 +72,13 @@ class Vm(models.Model):
             ipv4 = self.environment.netbox().ipam.ip_addresses.create(
                 assigned_object_type="virtualization.vminterface",
                 assigned_object_id=interface['id'],
-                address="{}/{}".format(self.config['config']['ipv4']['ip'], self.config['config']['ipv4']['prefixlen']),
+                address="{}/{}".format(self.config['net']['ipv4']['ip'], self.config['net']['ipv4']['prefixlen']),
                 status="active"
              )
             ipv6 = self.environment.netbox().ipam.ip_addresses.create(
                 assigned_object_type="virtualization.vminterface",
                 assigned_object_id=interface['id'],
-                address="{}/{}".format(self.config['config']['ipv6']['ip'], self.config['config']['ipv6']['prefixlen']),
+                address="{}/{}".format(self.config['net']['ipv6']['ip'], self.config['net']['ipv6']['prefixlen']),
                 status="active"
             )
             vm.primary_ip4 = ipv4['id']
@@ -135,7 +135,7 @@ class Vm(models.Model):
                 "changetype": "replace",
                 "type": "A",
                 "records": [{
-                    "content": self.config['config']['ipv4']['ip'],
+                    "content": self.config['net']['ipv4']['ip'],
                     "disabled": False,
                     "type": "A"
                 }],
@@ -146,7 +146,7 @@ class Vm(models.Model):
                 "changetype": "replace",
                 "type": "AAAA",
                 "records": [{
-                    "content": self.config['config']['ipv6']['ip'],
+                    "content": self.config['net']['ipv6']['ip'],
                     "disabled": False,
                     "type": "AAAA"
                 }],
@@ -160,7 +160,7 @@ class Vm(models.Model):
             self.save()
 
             rdns_v4_zones = self.environment.powerdns().search("*.in-addr.arpa", 2000, "zone")
-            v4_ptr = ipaddress.IPv4Address(self.config['config']['ipv4']['ip']).reverse_pointer
+            v4_ptr = ipaddress.IPv4Address(self.config['net']['ipv4']['ip']).reverse_pointer
             rdns_v4_zone = None
             for zone in [ sub['name'] for sub in rdns_v4_zones ]:
                 test = str(v4_ptr).split('.')
@@ -171,7 +171,7 @@ class Vm(models.Model):
                         rdns_v4_zone = zone
                         break
             rdns_v6_zones = self.environment.powerdns().search("*.ip6.arpa", 2000, "zone")
-            v6_ptr = ipaddress.IPv6Address(self.config['config']['ipv6']['ip']).reverse_pointer
+            v6_ptr = ipaddress.IPv6Address(self.config['net']['ipv6']['ip']).reverse_pointer
             rdns_v6_zone = None
             for zone in [ sub['name'] for sub in rdns_v6_zones ]:
                 test = str(v6_ptr).split('.')
@@ -226,7 +226,7 @@ class Vm(models.Model):
         fqdn = "{}.{}".format(self.name, self.environment.config['domain'])
         if 'freeipa' not in self.state:
             client = self.environment.freeipa()
-            print(client.host_add(fqdn, o_ip_address=self.config['config']['ipv4']['ip']))
+            print(client.host_add(fqdn, o_ip_address=self.config['net']['ipv4']['ip']))
             self.state['freeipa'] = {"fqdn": fqdn}
             self.state['freeipa']['status'] = "provisioned"
             self.save()
@@ -248,8 +248,8 @@ class Vm(models.Model):
                 if key not in self.state['awx_templates']:
                     self.state['awx_templates'][key] = {"status": "new"}
                     self.save()
-                if key in self.state['awx_templates'] and self.state['awx_templates'][key]["status"] in ["provisioning", "pending"]:
-                    break
+                if key in self.state['awx_templates'] and self.state['awx_templates'][key]["status"] in ["successful", "provisioned", "provisioning", "pending"]:
+                    continue
 
                 requirements_met = True
                 if 'trigger' in template:
@@ -261,6 +261,7 @@ class Vm(models.Model):
                     self.state['awx_templates'][key] = {"status": "provisioning"}
                     from vms.jobs import run_awx_template_job
                     run_awx_template_job.delay(self.pk, template['id'], key)
+                    break
                 else:
                     self.state['awx_templates'][key] = {"status": "missing_dependency"}
 
