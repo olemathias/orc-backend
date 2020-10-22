@@ -4,7 +4,10 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<a href="/vms/{{vm.pk}}/delete"> Delete VM (DANGER DANGER)</a> <br /> <br />
+{% if 'proxmox' in vm.state and 'vm_status' in vm.state.proxmox %}
+<a href="/vms/{{vm.pk}}/reboot"> <i class="fas fa-recycle"></i> Force Reboot VM </a> <br />
+{% endif %}
+<a href="/vms/{{vm.pk}}/delete"> <i class="fas fa-dumpster-fire"></i> Destroy VM</a><br/><br />
 
 <table class="table">
   <tbody>
@@ -22,11 +25,36 @@
     </tr>
     <tr>
       <th scope="row">IPv4</th>
-      <td>{{vm.config.config.ipv4}}</td>
+      <td>{{vm.config.net.ipv4.ip}}/{{vm.config.net.ipv4.prefixlen}}</td>
     </tr>
     <tr>
       <th scope="row">IPv6</th>
-      <td>{{vm.config.config.ipv6}}</td>
+      <td>{{vm.config.net.ipv6.ip}}/{{vm.config.net.ipv6.prefixlen}}</td>
+    </tr>
+    <tr>
+    {% if 'proxmox' in vm.state and 'vm_status' in vm.state.proxmox %}
+      <tr>
+        <th scope="row">VM Status</th>
+        <td>
+          {% if vm.state.proxmox.vm_status == 'running'%}
+          <i class="fas fa-running"></i>
+          {{vm.state.proxmox.vm_status.capitalize}}
+          {% elif vm.state.proxmox.vm_status == 'stopped'%}
+          <i class="fas fa-stop-circle"></i>
+          {{vm.state.proxmox.vm_status.capitalize}}
+          {% else%}
+          {{vm.state.proxmox.vm_status.capitalize}}
+          {% endif%}
+        </td>
+      </tr>
+      <tr>
+    {% endif %}
+      <th scope="row">Created</th>
+      <td>{{vm.created}}</td>
+    </tr>
+    <tr>
+      <th scope="row">Last Updated</th>
+      <td>{{vm.updated}}</td>
     </tr>
   </tbody>
 </table>

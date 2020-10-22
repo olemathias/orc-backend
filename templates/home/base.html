@@ -1,5 +1,6 @@
 {% url 'home' as home_url %}
 {% url 'vms' as vms_url %}
+{% url 'environments' as environments_url %}
 {% load static %}
 <!doctype html>
 <html lang="en">
@@ -34,19 +35,29 @@
         <div class="sidebar-sticky pt-3">
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a class="nav-link {% if request.path == home_url %} active {%endif%}" href="/">
+              <a class="nav-link {% if request.path == home_url %} active {%endif%}" href="{{home_url}}">
                 Home
               </a>
             </li>
             {% if user.is_authenticated %}
             <li class="nav-item">
-              <a class="nav-link {% if request.path == vms_url %} active {%endif%}" href="/vms">
+              <a class="nav-link {% if request.path == environments_url %} active {%endif%}" href="{{environments_url}}">
+                Environments
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.path == vms_url %} active {%endif%}" href="{{vms_url}}">
                 VMs
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="/admin">
                 Admin
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/django-rq">
+                Django RQ
               </a>
             </li>
             {% endif %}

@@ -1,0 +1,62 @@
+{% load widget_tweaks %}
+<form method="post">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="exampleInputEmail1">Name</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{environment.name}}">
+  </div>
+  <h4> Netbox </h4>
+  <div class="form-group">
+    <label for="exampleInputEmail1">URL</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{environment.config.netbox.url}}">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputEmail1">Token</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+  </div>
+  <h4> PowerDNS </h4>
+  <div class="form-group">
+    <label for="exampleInputEmail1">URL</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{environment.config.powerdns.url}}">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputEmail1">Key</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+  </div>
+  <h4> AWX </h4>
+  <div class="form-group">
+    <label for="exampleInputEmail1">Host</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{environment.config.awx.host}}">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputEmail1">User</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{environment.config.awx.user}}">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputEmail1">Password</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputEmail1">Inventory</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{environment.config.awx.inventory}}">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputEmail1">Organization</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{environment.config.awx.organization}}">
+  </div>
+  <h4> FreeIPA </h4>
+  <div class="form-group">
+    <label for="exampleInputEmail1">Host</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{environment.config.freeipa.host}}">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputEmail1">User</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{environment.config.freeipa.user}}">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputEmail1">Password</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+  </div>
+
+  <input type="submit" value="Save" class="btn btn-primary">
+</form>

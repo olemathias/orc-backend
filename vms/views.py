@@ -6,7 +6,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 from vms.models import Vm
 from ipam.models import Network, Environment
-from jobs.models import Job
 from vms.forms import VmForm
 
 from vms.jobs import update_vm_job, delete_vm_job
@@ -77,7 +76,7 @@ def create(request):
                 "cpu_cores": request.POST['cpu_cores'],
                 "os_disk": request.POST['os_disk'],
             },
-            "config": {
+            "net": {
                 "vlan_id": network.vid(),
                 "ipv4": {
                     "ip": str(ipv4.ip),
@@ -89,25 +88,31 @@ def create(request):
                     "prefixlen": ipv6.prefixlen,
                     "gw": str(ipv6[1])
                 },
-                "domain": environment.config['domain']
+                "domain": environment.config['domain'],
+                "firewall": True
             }
         }
 
         vm.config["awx_templates"] = {
-            "apt_update": {"id": 11, "name": "Apt Update/Upgrade", "trigger": {"after_state": ["netbox", "proxmox", "awx", "powerdns"]}},
             "ipa_install": {"id": 10, "name": "Install IPAClient", "trigger": {"after_state": ["netbox", "proxmox", "awx", "freeipa", "powerdns"]}},
             "docker_test": {"id": 12, "name": "Docker Test", "trigger": {"after_state": ["netbox", "proxmox", "awx", "freeipa", "powerdns"]}}
         }
 
-        #vm.update_state()
         vm.save()
+        vm.update_netbox()
         update_vm_job.delay(vm.pk)
-        return redirect("/vms/{}".format(vm.pk))
+        return redirect("/vms/")
 
 def delete(request, id):
     vm = Vm.objects.get(pk=id)
     delete_vm_job.delay(vm.pk)
     return redirect("/vms".format(vm.pk))
+
+def reboot(request, id):
+    from vms.proxmox import restart_qemu_vm_job
+    vm = Vm.objects.get(pk=id)
+    restart_qemu_vm_job.delay(vm.pk)
+    return redirect("/vms/{}".format(vm.pk))
 
 def update_state(request, id):
     vm = Vm.objects.get(pk=id)

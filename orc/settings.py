@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'vms.apps.VmsConfig',
     'ipam.apps.IpamConfig',
-    'jobs.apps.JobsConfig',
     'widget_tweaks',
     'django_rq',
     'django_sass',
