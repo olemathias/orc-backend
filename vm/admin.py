@@ -1,5 +1,4 @@
 from django.contrib import admin
-
-from .models import Vm
+from vm.models import Vm
 
 admin.site.register(Vm)

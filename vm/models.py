@@ -13,6 +13,9 @@ class Vm(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        db_table = 'vms_vm'
+
     def __str__(self):
         return self.name
 
@@ -50,8 +53,8 @@ class Vm(models.Model):
             self.state['netbox'] = {}
             vm = self.environment.netbox().virtualization.virtual_machines.create(
                 name=self.name,
-                site=self.environment.get_site_id(),
-                cluster=self.environment.get_cluster_id(),
+                site=self.environment.site_id,
+                cluster=self.environment.cluster_id,
                 role=self.config['role'],
                 vcpus=self.config['hw']['cpu_cores'],
                 memory=int(self.config['hw']['memory'])*1024,
@@ -103,7 +106,7 @@ class Vm(models.Model):
         if 'proxmox' not in self.state:
             self.state['proxmox'] = {}
             self.save()
-            from vms.proxmox import create_qemu_vm_job
+            from vm.proxmox import create_qemu_vm_job
             create_qemu_vm_job.delay(self.pk, 'pve1')
 
         if 'proxmox' in self.state and 'id' in self.state['proxmox'] and self.state['proxmox']['id'] is not None:
@@ -259,7 +262,7 @@ class Vm(models.Model):
                                 requirements_met = False
                 if requirements_met:
                     self.state['awx_templates'][key] = {"status": "provisioning"}
-                    from vms.jobs import run_awx_template_job
+                    from vm.jobs import run_awx_template_job
                     run_awx_template_job.delay(self.pk, template['id'], key)
                     break
                 else:
@@ -299,7 +302,7 @@ class Vm(models.Model):
         self.state['proxmox']['status'] = "destroying"
         self.save()
 
-        from vms.proxmox import delete_qemu_vm_job
+        from vm.proxmox import delete_qemu_vm_job
         delete_qemu_vm_job.delay(self.pk)
 
         return True

@@ -7,7 +7,7 @@
   <thead>
     <tr>
       <th scope="col">#</th>
-      <th scope="col">Name</th>
+      <th scope="col">FQDN</th>
       <th scope="col">Environment</th>
       <th scope="col">Status</th>
     </tr>
@@ -16,7 +16,7 @@
     {% for vm in vms %}
     <tr>
       <th><a href="/vms/{{vm.pk}}"> {{ vm.pk }} </a></th>
-      <td> {{ vm.name }} </td>
+      <td> <a href="/vms/{{vm.pk}}"> {{ vm.fqdn }} </a> </td>
       <td> {{ vm.environment.name }} </td>
       <td>
       {% if vm.status in 'provisioned'  %}

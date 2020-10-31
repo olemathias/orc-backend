@@ -1,19 +1,15 @@
 from django_rq import job
-
-from vms.models import Vm
-
+from vm.models import Vm
 import time
 
 @job
 def update_vm_job(id):
-    print(id)
     vm = Vm.objects.get(pk=int(id))
     vm.update_state()
     return True
 
 @job
 def delete_vm_job(id):
-    print(id)
     vm = Vm.objects.get(pk=int(id))
     vm.delete_vm()
     return True
