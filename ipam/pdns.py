@@ -1,7 +1,6 @@
 import requests
 import json
 
-
 class PowerDNS:
     def __init__(self, base_url, apikey):
         self.base_url = base_url

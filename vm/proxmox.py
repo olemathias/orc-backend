@@ -5,7 +5,7 @@ import requests
 import re
 
 from django_rq import job
-from vms.models import Vm
+from vm.models import Vm
 
 import io
 from paramiko import SSHClient, Ed25519Key

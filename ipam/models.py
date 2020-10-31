@@ -6,7 +6,7 @@ import pynetbox
 import proxmoxer
 import python_freeipa
 from towerlib import Tower
-from .pdns import PowerDNS
+from ipam.pdns import PowerDNS
 
 class Environment(models.Model):
     name = models.CharField(max_length=256)
@@ -42,11 +42,13 @@ class Environment(models.Model):
     def awx(self):
         return Tower(self.config['awx']['host'], self.config['awx']['user'], self.config['awx']['password'], secure=False)
 
-    def get_site_id(self):
+    @property
+    def site_id(self):
         self.fetch_from_netbox_cluster()
         return self.nb_cluster.site.id
 
-    def get_cluster_id(self):
+    @property
+    def cluster_id(self):
         self.fetch_from_netbox_cluster()
         return self.nb_cluster.id
 
@@ -72,24 +74,29 @@ class Network(models.Model):
         available_ips = len(self.get_available_ips())
         if available_ips == 50:
             available_ips = "50+"
-        return "{} (VLAN: {}) - {} free IPs".format(self.name(), self.vid(), available_ips)
+        return "{} (VLAN: {}) - {} free IPs".format(self.name, self.vid, available_ips)
 
+    @property
     def vid(self):
         self.fetch_from_netbox_vlan()
         return self.nb_vlan.vid
 
+    @property
     def name(self):
         self.fetch_from_netbox_vlan()
         return self.nb_vlan.name
 
+    @property
     def display_name(self):
         self.fetch_from_netbox_vlan()
         return self.nb_vlan.display_name
 
+    @property
     def description(self):
         self.fetch_from_netbox_vlan()
         return self.nb_vlan.description
 
+    @property
     def prefixes4(self):
         self.fetch_from_netbox_prefixes()
         prefixes = []
@@ -98,6 +105,7 @@ class Network(models.Model):
                 prefixes.append(prefix.prefix)
         return prefixes
 
+    @property
     def prefixes6(self):
         self.fetch_from_netbox_prefixes()
         prefixes = []
@@ -121,12 +129,12 @@ class Network(models.Model):
         m = p.match(ipv4)
         ipv4_last = m.group(4)
         p = re.compile('(.*)::/(.*)')
-        m = p.match(str(self.prefixes6()[0]))
+        m = p.match(str(self.prefixes6[0]))
         ipv6 = "{0}::{1}/{2}".format(m.group(1), ipv4_last, m.group(2))
 
         return {
-        "ipv4": ipv4,
-        "ipv6": ipv6
+            "ipv4": ipv4,
+            "ipv6": ipv6
         }
 
     def fetch_from_netbox_vlan(self):
