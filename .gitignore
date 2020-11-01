@@ -2,3 +2,4 @@ env
 db.sqlite3
 __pycache__
 .DS_Store
+auth_ldap_bind_password

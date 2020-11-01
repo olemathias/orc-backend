@@ -149,21 +149,34 @@ JWT_AUTH = {
 
 ##### LDAP #####
 
-# Baseline configuration.
-AUTH_LDAP_SERVER_URI = "ldap://ipa1.msbone.net"
-LDAP_IGNORE_CERT_ERRORS = True
+# Read secret from file
+def _read_secret(secret_name, default=None):
+    try:
+        f = open(BASE_DIR / secret_name, 'r', encoding='utf-8')
+    except EnvironmentError:
+        return default
+    else:
+        with f:
+            return f.readline().strip()
 
-AUTH_LDAP_BIND_DN = "uid=orc,cn=users,cn=accounts,dc=msbone,dc=net"
-AUTH_LDAP_BIND_PASSWORD = "7NhsGN4y8Hmwq3sqjI6cLhI"
-AUTH_LDAP_USER_SEARCH = LDAPSearch(
-    "cn=users,cn=accounts,dc=msbone,dc=net", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-)
+# Baseline configuration.
+AUTH_LDAP_SERVER_URI = os.environ.get('AUTH_LDAP_SERVER_URI', 'ldap://ipa1.msbone.net')
+LDAP_IGNORE_CERT_ERRORS = os.environ.get('LDAP_IGNORE_CERT_ERRORS', 'True').lower() == 'true'
+
+AUTH_LDAP_BIND_DN = os.environ.get('AUTH_LDAP_BIND_DN', 'uid=orc,cn=users,cn=accounts,dc=msbone,dc=net')
+AUTH_LDAP_BIND_PASSWORD = _read_secret('auth_ldap_bind_password', os.environ.get('AUTH_LDAP_BIND_PASSWORD', ''))
+
+AUTH_LDAP_USER_SEARCH_BASEDN = os.environ.get('AUTH_LDAP_USER_SEARCH_BASEDN', 'cn=users,cn=accounts,dc=msbone,dc=net')
+AUTH_LDAP_USER_SEARCH_ATTR = os.environ.get('AUTH_LDAP_USER_SEARCH_ATTR', 'uid')
+AUTH_LDAP_USER_SEARCH = LDAPSearch(AUTH_LDAP_USER_SEARCH_BASEDN,
+                                   ldap.SCOPE_SUBTREE,
+                                   "(" + AUTH_LDAP_USER_SEARCH_ATTR + "=%(user)s)")
 
 # Populate the Django user from the LDAP directory.
 AUTH_LDAP_USER_ATTR_MAP = {
-    "first_name": "givenName",
-    "last_name": "sn",
-    "email": "mail",
+    "first_name": os.environ.get('AUTH_LDAP_ATTR_FIRSTNAME', 'givenName'),
+    "last_name": os.environ.get('AUTH_LDAP_ATTR_LASTNAME', 'sn'),
+    "email": os.environ.get('AUTH_LDAP_ATTR_MAIL', 'mail')
 }
 
 # Set up the basic group parameters.
@@ -176,10 +189,12 @@ AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
 AUTH_LDAP_GROUP_TYPE = GroupOfNamesType(name_attr="cn")
 
 AUTH_LDAP_USER_FLAGS_BY_GROUP = {
-    "is_active": "cn=admins,cn=groups,cn=accounts,dc=msbone,dc=net",
-    "is_staff": "cn=admins,cn=groups,cn=accounts,dc=msbone,dc=net",
-    "is_superuser": "cn=admins,cn=groups,cn=accounts,dc=msbone,dc=net",
+    "is_active": os.environ.get('AUTH_LDAP_REQUIRE_GROUP_DN', 'cn=admins,cn=groups,cn=accounts,dc=msbone,dc=net'),
+    "is_staff": os.environ.get('AUTH_LDAP_IS_ADMIN_DN', 'cn=admins,cn=groups,cn=accounts,dc=msbone,dc=net'),
+    "is_superuser": os.environ.get('AUTH_LDAP_IS_SUPERUSER_DN', 'cn=admins,cn=groups,cn=accounts,dc=msbone,dc=net')
 }
+
+AUTH_LDAP_CACHE_TIMEOUT = int(os.environ.get('AUTH_LDAP_CACHE_TIMEOUT', 600))
 
 # Keep ModelBackend around for per-user permissions and maybe a local
 # superuser.
