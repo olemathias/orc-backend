@@ -32,7 +32,8 @@ INSTALLED_APPS = [
     'ipam.apps.IpamConfig',
     'django_rq',
     'rest_framework',
-    'corsheaders'
+    'corsheaders',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
