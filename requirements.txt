@@ -12,3 +12,5 @@ scp
 django-auth-ldap
 djangorestframework
 markdown
+django-cors-headers
+djangorestframework-simplejwt
