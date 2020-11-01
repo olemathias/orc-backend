@@ -1,6 +1,5 @@
 django
 pynetbox
-django-widget-tweaks
 proxmoxer
 netaddr
 psycopg2
@@ -11,5 +10,5 @@ pyyaml
 paramiko
 scp
 django-auth-ldap
-django-login-required-middleware
-django-sass
+djangorestframework
+markdown
