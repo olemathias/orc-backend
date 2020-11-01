@@ -3,16 +3,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from vm.models import Vm
+from vm.serializers import VmSerializer
 from vm.jobs import update_vm_job, delete_vm_job
 from ipam.models import Network, Environment
 
 from netaddr import *
-
-# Serializers define the API representation.
-class VmSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Vm
-        fields = ['id', 'environment', 'environment_id', 'name', 'config', 'state', 'network', 'network_id', 'created', 'updated']
 
 class VmViewSet(viewsets.ModelViewSet):
     queryset = Vm.objects.all()
