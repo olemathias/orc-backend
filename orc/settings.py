@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.staticfiles',
     'vm.apps.VmConfig',
     'ipam.apps.IpamConfig',
     'django_rq',
@@ -117,6 +118,8 @@ USE_TZ = True
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+STATIC_URL = '/static/'
 
 RQ_QUEUES = {
     'default': {
