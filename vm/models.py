@@ -13,9 +13,6 @@ class Vm(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        db_table = 'vms_vm'
-
     def __str__(self):
         return self.name
 
