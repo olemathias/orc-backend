@@ -124,10 +124,10 @@ STATIC_URL = '/static/'
 
 RQ_QUEUES = {
     'default': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 15,
-        'DEFAULT_TIMEOUT': 360,
+        'HOST': os.environ.get('RQ_QUEUES_HOST', 'localhost'),
+        'PORT': os.environ.get('RQ_QUEUES_PORT', 6379),
+        'DB': os.environ.get('RQ_QUEUES_DB', 15),
+        'DEFAULT_TIMEOUT': os.environ.get('RQ_QUEUES_TIMEOUT', 360),
     }
 }
 
@@ -142,9 +142,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-CORS_ORIGIN_WHITELIST = (
-    'http://localhost:3000',
-)
+CORS_ORIGIN_WHITELIST = os.environ.get('CORS_ORIGIN_WHITELIST', 'http://localhost:3000').split(' ')
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=60),
@@ -194,7 +192,7 @@ AUTH_LDAP_USER_ATTR_MAP = {
 
 # Set up the basic group parameters.
 AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
-    "cn=groups,cn=accounts,dc=msbone,dc=net",
+    os.environ.get('AUTH_LDAP_GROUP_SEARCH', 'cn=groups,cn=accounts,dc=msbone,dc=net'),
     ldap.SCOPE_SUBTREE,
     "(objectClass=groupOfNames)",
 )
