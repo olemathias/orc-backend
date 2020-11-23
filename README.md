@@ -1,2 +1,2 @@
 # orc
-Virtual Machive Orchestration tool
+Virtual Machine Orchestration Tool
