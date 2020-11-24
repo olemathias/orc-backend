@@ -8,7 +8,7 @@ from django_rq import job
 from vm.models import Vm
 
 import io
-from paramiko import SSHClient, Ed25519Key
+import paramiko
 from scp import SCPClient
 
 @job
@@ -165,11 +165,12 @@ def create_cloudinit_userdata(pve_node_name, vm):
     }
     userdata_file = '{}/cloudinit_user_{}.yaml'.format(node_config['userdata_location'], vm.state['proxmox']['id'])
     not_really_a_file = io.StringIO(node_config['private_ssh_key'])
-    private_key = Ed25519Key.from_private_key(not_really_a_file)
+    private_key = paramiko.Ed25519Key.from_private_key(not_really_a_file)
     not_really_a_file.close()
 
-    ssh = SSHClient()
+    ssh = paramiko.SSHClient()
     ssh.load_system_host_keys() # TODO Server '195.154.87.154' not found in known_hosts if removed
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # TODO Is this good?
     ssh.connect(node_config['ip'], username=node_config['ssh_user'], pkey=private_key)
     scp = SCPClient(ssh.get_transport())
 
@@ -205,11 +206,12 @@ def cleanup_cloudinit(pve_node_name, vm):
     userdata_file = '{}/cloudinit_user_{}.yaml'.format(node_config['userdata_location'], vm.state['proxmox']['id'])
 
     not_really_a_file = io.StringIO(node_config['private_ssh_key'])
-    private_key = Ed25519Key.from_private_key(not_really_a_file)
+    private_key = paramiko.Ed25519Key.from_private_key(not_really_a_file)
     not_really_a_file.close()
 
-    ssh = SSHClient()
+    ssh = paramiko.SSHClient()
     ssh.load_system_host_keys() # TODO Server '195.154.87.154' not found in known_hosts if removed
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # TODO Is this good?
     ssh.connect(node_config['ip'], username=node_config['ssh_user'], pkey=private_key)
     ssh.exec_command("rm {}".format(userdata_file))
     ssh.close()
