@@ -20,6 +20,8 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(' ')
 
+FORCE_SCRIPT_NAME = os.environ.get('FORCE_SCRIPT_NAME', None)
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -210,6 +212,6 @@ AUTH_LDAP_CACHE_TIMEOUT = int(os.environ.get('AUTH_LDAP_CACHE_TIMEOUT', 600))
 # Keep ModelBackend around for per-user permissions and maybe a local
 # superuser.
 AUTHENTICATION_BACKENDS = (
-    "django_auth_ldap.backend.LDAPBackend",
     "django.contrib.auth.backends.ModelBackend",
+    "django_auth_ldap.backend.LDAPBackend",
 )
