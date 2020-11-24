@@ -61,7 +61,7 @@ class VmViewSet(viewsets.ModelViewSet):
         vm.save()
         vm.update_netbox()
         update_vm_job.delay(vm.pk)
-        return Response(status=201)
+        return Response({'id': vm.pk, 'status': 'created'}, status=201)
 
     def destroy(self, request, *args, **kwargs):
         vm = self.get_object()
