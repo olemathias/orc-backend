@@ -3,6 +3,8 @@ from rest_framework import serializers
 from ipam.models import Environment, Network
 
 class EnvironmentSerializer(serializers.HyperlinkedModelSerializer):
+    config = serializers.JSONField(source='stripped_config')
+
     class Meta:
         model = Environment
         fields = ['id', 'name', 'config', 'state', 'created', 'updated']

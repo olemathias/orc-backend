@@ -8,6 +8,18 @@ import python_freeipa
 from towerlib import Tower
 from ipam.pdns import PowerDNS
 
+def remove_secrets(obj, rubbish):
+    if isinstance(obj, dict):
+        obj = {
+            key: remove_secrets(value, rubbish)
+            for key, value in obj.items()
+            if key not in rubbish}
+    elif isinstance(obj, list):
+        obj = [remove_secrets(item, rubbish)
+                  for item in obj
+                  if item not in rubbish]
+    return obj
+
 class Environment(models.Model):
     name = models.CharField(max_length=256)
     config = models.JSONField()
@@ -15,6 +27,10 @@ class Environment(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     nb_cluster = None
+
+    def stripped_config(self):
+        secrets = ('token', 'ssh_authorized_keys', 'token_value', 'private_ssh_key', 'key', 'password')
+        return remove_secrets(self.config, secrets)
 
     def netbox(self):
         return pynetbox.api(
