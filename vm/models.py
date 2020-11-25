@@ -37,6 +37,19 @@ class Vm(models.Model):
             return 'provisioned'
         return 'unknown'
 
+    def get_pve_node_and_vm(self):
+        if 'proxmox' not in self.state or 'id' not in self.state['proxmox'] or self.state['proxmox']['id'] is None:
+            return None, None
+        pve_vm = None
+        pve_node = None
+        for t in self.environment.proxmox().cluster.resources.get(type='vm'):
+            if t['type'] == 'qemu' and int(t['vmid']) == int(self.state['proxmox']['id']):
+                pve_node = self.environment.proxmox().nodes(t['node'])
+                pve_vm = pve_node.qemu(self.state['proxmox']['id'])
+                self.state['proxmox']['node'] = t['node']
+                return pve_node, pve_vm
+        return None, None
+
     def update_state(self):
         self.update_netbox()
         self.update_powerdns()
@@ -108,22 +121,14 @@ class Vm(models.Model):
             create_qemu_vm_job.delay(self.pk, 'pve1')
 
         if 'proxmox' in self.state and 'id' in self.state['proxmox'] and self.state['proxmox']['id'] is not None:
-            vm = None
-            for node in proxmox.nodes.get():
-                try:
-                    vm = proxmox.nodes(node['node']).qemu(self.state['proxmox']['id'])
-                    if vm is not None:
-                        status = vm.status().current.get()
-                        config = vm.config().get()
-                        self.state['proxmox']['name'] = status['name']
-                        self.state['proxmox']['vm_status'] = status['status']
-                        self.state['proxmox']['node'] = node['node']
-                        self.state['proxmox']['config'] = config
-                        self.save()
-                        break
-                except Exception as e:
-                    pass
-            pass
+            pve_node, pve_vm = self.get_pve_node_and_vm()
+            if pve_vm is not None:
+                status = pve_vm.status().current.get()
+                config = pve_vm.config().get()
+                self.state['proxmox']['name'] = status['name']
+                self.state['proxmox']['vm_status'] = status['status']
+                self.state['proxmox']['config'] = config
+                self.save()
 
         return self.state['proxmox']
 
