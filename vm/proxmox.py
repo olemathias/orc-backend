@@ -98,7 +98,7 @@ def restart_qemu_vm_job(vm_id):
     if 'proxmox' not in vm.state or 'id' not in vm.state['proxmox'] or vm.state['proxmox']['id'] is None:
         return False
 
-    pve_node, pve_vm = get_pve_node_and_vm(vm)
+    pve_node, pve_vm = vm.get_pve_node_and_vm()
     if pve_node is None or pve_vm is None:
         return False
 
@@ -111,7 +111,7 @@ def delete_qemu_vm_job(vm_id):
     if 'proxmox' in vm.state and 'id' in vm.state['proxmox'] and vm.state['proxmox']['id'] is None:
         return False
 
-    pve_node, pve_vm = get_pve_node_and_vm(vm)
+    pve_node, pve_vm = vm.get_pve_node_and_vm()
     if pve_node is None or pve_vm is None:
         return False
 
@@ -122,16 +122,6 @@ def delete_qemu_vm_job(vm_id):
     vm.delete_vm()
 
     return True
-
-def get_pve_node_and_vm(vm):
-    pve_vm = None
-    pve_node = None
-    for t in vm.environment.proxmox().cluster.resources.get(type='vm'):
-        if t['type'] != 'qemu' and int(re.search('^qemu\/(\d+)$', t['id']).group(1)) != vm.state['proxmox']['id']:
-            continue
-        pve_node = vm.environment.proxmox().nodes(t['node'])
-        pve_vm = pve_node.qemu(vm.state['proxmox']['id'])
-        return pve_node, pve_vm
 
 def wait_for_poweroff(node, pve_vm_id):
     running = True
