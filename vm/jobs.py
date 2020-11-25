@@ -22,10 +22,12 @@ def run_awx_template_job(id, template_id, template_name):
     job = template.launch(limit=vm.fqdn)
     time.sleep(1) # To make sure job is registered
     while job.status in ["waiting", "pending", "running"]:
+        vm.refresh_from_db()
         if vm.state["awx_templates"][template_name]["status"] != job.status:
             vm.state["awx_templates"][template_name]["status"] = job.status
             vm.save()
         time.sleep(2)
+    vm.refresh_from_db()
     if job.finished is None:
         vm.state["awx_templates"][template_name]["status"] = job.status
         vm.save()

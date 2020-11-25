@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from ipam.models import Network, Environment
 
+import re
 import ipaddress
 
 class Vm(models.Model):
@@ -159,17 +160,26 @@ class Vm(models.Model):
             self.state['powerdns']['domains'][self.environment.config['domain']+"."] = rrsets
             self.save()
 
-            rdns_v4_zones = self.environment.powerdns().search("*.in-addr.arpa", 2000, "zone")
-            v4_ptr = ipaddress.IPv4Address(self.config['net']['ipv4']['ip']).reverse_pointer
-            rdns_v4_zone = None
-            for zone in [ sub['name'] for sub in rdns_v4_zones ]:
-                test = str(v4_ptr).split('.')
-                for i in range(len(test)-2):
-                    x = len(test) - i
-                    print(".".join(test[-x:])+'.')
-                    if ".".join(test[-x:])+'.' in zone:
-                        rdns_v4_zone = zone
-                        break
+            # Hack to support custom in-addr.arpa zones.
+            # Example zone 64-127.182.80.185.in-addr.arpa (for a network smaller then /24)
+            # Assumes that this will never be used on bigger networks than /24
+            if 'v4_rdns_zone' in self.network.config:
+                p = re.compile('(.*)\.(.*)\.(.*)\.(.*)')
+                m = p.match(self.config['net']['ipv4']['ip'])
+                rdns_v4_zone = self.network.config['v4_rdns_zone']
+                v4_ptr = "{0}.{1}".format(m.group(4), rdns_v4_zone)
+            else:
+                rdns_v4_zones = self.environment.powerdns().search("*.in-addr.arpa", 2000, "zone")
+                v4_ptr = ipaddress.IPv4Address(self.config['net']['ipv4']['ip']).reverse_pointer
+                rdns_v4_zone = None
+                for zone in [ sub['name'] for sub in rdns_v4_zones ]:
+                    test = str(v4_ptr).split('.')
+                    for i in range(len(test)-2):
+                        x = len(test) - i
+                        if ".".join(test[-x:])+'.' in zone:
+                            rdns_v4_zone = zone
+                            break
+
             rdns_v6_zones = self.environment.powerdns().search("*.ip6.arpa", 2000, "zone")
             v6_ptr = ipaddress.IPv6Address(self.config['net']['ipv6']['ip']).reverse_pointer
             rdns_v6_zone = None
@@ -177,7 +187,6 @@ class Vm(models.Model):
                 test = str(v6_ptr).split('.')
                 for i in range(len(test)-2):
                     x = len(test) - i
-                    print(".".join(test[-x:])+'.')
                     if ".".join(test[-x:])+'.' in zone:
                         rdns_v6_zone = zone
                         break
@@ -248,7 +257,7 @@ class Vm(models.Model):
                 if key not in self.state['awx_templates']:
                     self.state['awx_templates'][key] = {"status": "new"}
                     self.save()
-                if key in self.state['awx_templates'] and self.state['awx_templates'][key]["status"] in ["successful", "provisioned", "provisioning", "pending"]:
+                if key in self.state['awx_templates'] and self.state['awx_templates'][key]["status"] in ["successful", "provisioned", "provisioning", "pending", "failed"]:
                     continue
 
                 requirements_met = True
