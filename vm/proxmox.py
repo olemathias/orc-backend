@@ -11,6 +11,18 @@ import io
 import paramiko
 from scp import SCPClient
 
+def find_pve_template(pve_node, template):
+    pve_vm_templates = []
+    for t in pve_node.qemu.get():
+        if re.match(template.config['pve_template'], t['name']) is not None:
+            pve_vm_templates.append(pve_node.qemu(t['vmid']))
+
+    # Only return if we have one match
+    if len(pve_vm_templates) == 1:
+        return pve_vm_templates[0]
+    return None
+
+
 @job
 def create_qemu_vm_job(vm_id, pve_node_name):
     vm = Vm.objects.get(pk=vm_id)
@@ -20,35 +32,37 @@ def create_qemu_vm_job(vm_id, pve_node_name):
     if 'proxmox' not in vm.state:
         vm.state['proxmox'] = {}
 
+    pve_node = vm.environment.proxmox().nodes(pve_node_name)
+    pve_vm_template = find_pve_template(pve_node, vm.template)
+    if pve_vm_template is None:
+        raise Exception('VM Template not found, or more then one found')
+    pve_vm_template_status = pve_vm_template.status().current.get()
+
     pve_vm_id = vm.environment.proxmox().cluster.nextid.get()
     vm.state['proxmox']['id'] = pve_vm_id
     vm.state['proxmox']['status'] = "provisioning"
-    vm.state['proxmox']['template'] = vm.config['os_template']
+    vm.state['proxmox']['template'] = { pve_vm_template_status['vmid']: pve_vm_template_status['name'] }
     vm.state['proxmox']['node'] = pve_node_name
     vm.save()
 
-    pve_node = vm.environment.proxmox().nodes(pve_node_name)
+
 
     create_cloudinit_userdata(pve_node_name, vm)
 
-    # TODO Remove hardcoded ids
-    if vm.config['os_template'] == "debian10":
-        vm_template = pve_node.qemu(9001)
-    elif vm.config['os_template'] == "ubuntu2004":
-        vm_template = pve_node.qemu(9000)
 
-    pve_job_id = vm_template.clone.post(
+    pve_clone_job_id = pve_vm_template.clone.post(
         newid=pve_vm_id,
         description="{}".format("just a test"),
         name=vm.name,
         full=1,
         target=pve_node_name
     )
+
     ip4 = "{}/{}".format(vm.config['net']['ipv4']['ip'], vm.config['net']['ipv4']['prefixlen'])
     ip6 = "{}/{}".format(vm.config['net']['ipv6']['ip'], vm.config['net']['ipv6']['prefixlen'])
     gw4 = vm.config['net']['ipv4']['gw']
     gw6 = vm.config['net']['ipv6']['gw']
-    wait_for_job(pve_node, pve_job_id)
+    wait_for_job(pve_node, pve_clone_job_id)
     new_vm = pve_node.qemu(pve_vm_id)
     new_vm.config.post(
         memory=int(vm.config['hw']['memory'])*1024,
@@ -144,10 +158,12 @@ def wait_for_job(node, pve_job_id):
 def create_cloudinit_userdata(pve_node_name, vm):
     node_config = vm.environment.config['proxmox']['nodes'][pve_node_name]
 
+    user = vm.template.config['user'] if 'user' in vm.template.config and vm.template.config['user'] is not None else 'debian'
+
     data = {
         'hostname': vm.name,
         'fqdn': '{}.{}'.format(vm.name, vm.environment.config['domain']),
-        'user': 'debian', # Remove hardcode, get from template
+        'user': user,
         'ssh_authorized_keys': vm.environment.config['proxmox']['ssh_authorized_keys'],
         'chpasswd': {'expire': False},
         'users': ['default'],
@@ -180,7 +196,9 @@ def create_cloudinit_userdata(pve_node_name, vm):
 def get_run_cmd(vm):
     # TODO, Add support for more then debian based OSes, perhaps read this from config files
     # TODO, we can add custom input here, between apt install and autoremove
-    return [
+    additional_run_cmd = vm.template.config['additional_run_cmd'] if 'additional_run_cmd' in vm.template.config else []
+
+    pre = [
         'timedatectl set-timezone Europe/Oslo', # Remove hardcoded value
         'sed -i -e "s/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/" /etc/locale.gen',
         'sed -i -e "s/# nb_NO.UTF-8 UTF-8/nb_NO.UTF-8 UTF-8/" /etc/locale.gen',
@@ -188,11 +206,17 @@ def get_run_cmd(vm):
         'update-locale LANG=en_US.UTF-8',
         'update-locale LANGUAGE=en_US:en',
         'touch /var/lib/cloud/instance/locale-check.skip',
-        'DEBIAN_FRONTEND=noninteractive apt install -q -y software-properties-common qemu-guest-agent',
+        'DEBIAN_FRONTEND=noninteractive apt install -q -y software-properties-common qemu-guest-agent'
+    ]
+
+    late = [
         'apt autoremove -y',
         'rm /root/.ssh/authorized_keys',
         'echo "network: {config: disabled}" > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg'
     ]
+
+    return pre + additional_run_cmd + late
+
 
 def cleanup_cloudinit(pve_node_name, vm):
     node_config = vm.environment.config['proxmox']['nodes'][pve_node_name]

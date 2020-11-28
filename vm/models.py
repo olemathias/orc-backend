@@ -5,12 +5,32 @@ from ipam.models import Network, Environment
 import re
 import ipaddress
 
+class VmTemplate(models.Model):
+    environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
+    name = models.CharField(max_length=256)
+    config = models.JSONField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class AWXTemplate(models.Model):
+    name = models.CharField(max_length=256)
+    config = models.JSONField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
 class Vm(models.Model):
     environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
     name = models.CharField(max_length=256)
     config = models.JSONField()
     state = models.JSONField()
     network = models.ForeignKey(Network, on_delete=models.CASCADE)
+    template = models.ForeignKey(VmTemplate, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -308,6 +328,8 @@ class Vm(models.Model):
     def delete_from_proxmox(self):
         proxmox = self.environment.proxmox()
         if 'proxmox' not in self.state or 'id' not in self.state['proxmox'] or self.state['proxmox']['id'] is None:
+            if 'proxmox' in self.state:
+                del self.state['proxmox']
             return False
 
         self.state['proxmox']['status'] = "destroying"
