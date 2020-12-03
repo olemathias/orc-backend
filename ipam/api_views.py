@@ -10,6 +10,13 @@ class EnvironmentViewSet(viewsets.ModelViewSet):
     queryset = Environment.objects.all()
     serializer_class = EnvironmentSerializer
 
+    @action(detail=True)
+    def get_ipa_hostgroups(self, request, pk):
+        environment = Environment.objects.get(pk=pk)
+        groups = []
+        for group in environment.freeipa().hostgroup_find()['result']:
+            groups.append(group['cn'][0])
+        return Response(groups)
 
 class NetworkViewSet(viewsets.ModelViewSet):
     queryset = Network.objects.all()
