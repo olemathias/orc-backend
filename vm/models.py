@@ -261,10 +261,13 @@ class Vm(models.Model):
         if 'freeipa' not in self.state:
             client = self.environment.freeipa()
             print(client.host_add(fqdn, o_ip_address=self.config['net']['ipv4']['ip']))
-            self.state['freeipa'] = {"fqdn": fqdn}
-            self.state['freeipa']['status'] = "provisioned"
+            self.state['freeipa'] = {"fqdn": fqdn, "status": "provisioned", "hostgroups": []}
+            if 'default_hostgroups' in self.environment.config['freeipa']:
+                for hostgroup in self.environment.config['freeipa']['default_hostgroups']:
+                    client.hostgroup_add_member(hostgroup, o_host=fqdn)
+                    self.state['freeipa']['hostgroups'].append(hostgroup)
             self.save()
-        pass
+        return self.state['freeipa']
 
     def update_awx(self):
         fqdn = "{}.{}".format(self.name, self.environment.config['domain'])
