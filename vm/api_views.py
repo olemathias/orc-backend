@@ -8,6 +8,7 @@ from vm.jobs import update_vm_job, delete_vm_job
 from ipam.models import Network, Environment
 
 from netaddr import *
+from cerberus import Validator
 
 class VmTemplateViewSet(viewsets.ModelViewSet):
     queryset = VmTemplate.objects.all()
@@ -23,12 +24,30 @@ class VmViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        environment = Environment.objects.get(pk=data['environment'])
+        try:
+            environment = Environment.objects.get(pk=data['environment'])
+        except Exception:
+            return Response({'status': 'failed', 'errors': 'Environment not found'}, status=400)
+
+        # TODO Support max values (mem, cpu, disk) overrides in environment
+        schema = {
+            'name': {'type': 'string', 'required': True, 'minlength': 3, 'maxlength': 63, 'regex': '^(?!-)[a-z\d-]{1,63}(?<!-)$'},
+            'environment': {'type': 'integer', 'required': True, 'allowed': list(Environment.objects.all().values_list('id', flat=True))},
+            'network': {'type': 'integer', 'required': True, 'allowed': list(Network.objects.filter(environment=data['environment']).values_list('id', flat=True))},
+            'vm_template': {'type': 'integer', 'required': True, 'allowed': list(VmTemplate.objects.filter(environment=data['environment']).values_list('id', flat=True))},
+            'memory': {'type': 'integer', 'required': True, 'min': 1, 'max': 48},
+            'cpu_cores': {'type': 'integer', 'required': True, 'min': 1, 'max': 12},
+            'os_disk': {'type': 'integer', 'required': True, 'min': 16, 'max': 512}
+        }
+        v = Validator(schema)
+        if v.validate(data) is not True:
+            return Response({'status': 'failed', 'errors': v.errors}, status=400)
+
         network = Network.objects.get(pk=data['network'])
         vm_template = VmTemplate.objects.get(pk=data['vm_template'])
 
         vm = Vm()
-        vm.name = data['name']
+        vm.name = data['name'].lower()
         vm.state = {}
         vm.environment = environment
         vm.network = network
@@ -41,9 +60,9 @@ class VmViewSet(viewsets.ModelViewSet):
             "name": vm.name,
             "role": 1,
             "hw": {
-                "memory": data['memory'],
-                "cpu_cores": data['cpu_cores'],
-                "os_disk": data['os_disk'],
+                "memory": int(data['memory']),
+                "cpu_cores": int(data['cpu_cores']),
+                "os_disk": int(data['os_disk']),
             },
             "net": {
                 "vlan_id": network.vid,
