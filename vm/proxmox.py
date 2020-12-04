@@ -25,7 +25,7 @@ def find_pve_template(pve_node, template):
 
 @job
 def create_qemu_vm_job(vm_id, pve_node_name):
-    vm = Vm.objects.get(pk=vm_id)
+    vm = Vm.objects.get(id=vm_id)
     if 'proxmox' in vm.state and 'id' in vm.state['proxmox'] and vm.state['proxmox']['id'] is None:
         return False
 
@@ -108,7 +108,7 @@ def create_qemu_vm_job(vm_id, pve_node_name):
 
 @job
 def restart_qemu_vm_job(vm_id):
-    vm = Vm.objects.get(pk=vm_id)
+    vm = Vm.objects.get(id=vm_id)
     if 'proxmox' not in vm.state or 'id' not in vm.state['proxmox'] or vm.state['proxmox']['id'] is None:
         return False
 
@@ -121,7 +121,7 @@ def restart_qemu_vm_job(vm_id):
 
 @job
 def delete_qemu_vm_job(vm_id):
-    vm = Vm.objects.get(pk=vm_id)
+    vm = Vm.objects.get(id=vm_id)
     if 'proxmox' in vm.state and 'id' in vm.state['proxmox'] and vm.state['proxmox']['id'] is None:
         return False
 

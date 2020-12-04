@@ -4,7 +4,7 @@ from django.urls import include, path
 from rest_framework import routers, serializers, viewsets
 from orc.jwt_token import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
-from vm.api_views import VmViewSet, VmTemplateViewSet, AWXTemplateViewSet
+from vm.api_views import VmViewSet, VmTemplateViewSet
 from ipam.api_views import EnvironmentViewSet, NetworkViewSet
 
 router = routers.DefaultRouter()
@@ -12,7 +12,6 @@ router.register(r'vm', VmViewSet)
 router.register(r'environment', EnvironmentViewSet)
 router.register(r'network', NetworkViewSet)
 router.register(r'vm_template', VmTemplateViewSet)
-router.register(r'awx_template', AWXTemplateViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
