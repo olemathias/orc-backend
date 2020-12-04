@@ -4,19 +4,19 @@ import time
 
 @job
 def update_vm_job(id):
-    vm = Vm.objects.get(pk=int(id))
+    vm = Vm.objects.get(id=id)
     vm.update_state()
     return True
 
 @job
 def delete_vm_job(id):
-    vm = Vm.objects.get(pk=int(id))
+    vm = Vm.objects.get(id=id)
     vm.delete_vm()
     return True
 
 @job
 def run_awx_template_job(id, template_id, template_name):
-    vm = Vm.objects.get(pk=int(id))
+    vm = Vm.objects.get(id=id)
     awx = vm.environment.awx()
     template = awx.get_job_template_by_id(template_id)
     job = template.launch(limit=vm.fqdn)

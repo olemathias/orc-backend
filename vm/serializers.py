@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from vm.models import Vm, VmTemplate, AWXTemplate
+from vm.models import Vm, VmTemplate
 
 from ipam.serializers import EnvironmentSerializerSummary, NetworkSerializerSummary
 
@@ -15,8 +15,3 @@ class VmTemplateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = VmTemplate
         fields = ['id', 'environment', 'name', 'config', 'created', 'updated']
-
-class AWXTemplateSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = AWXTemplate
-        fields = ['id', 'name', 'config', 'created', 'updated']

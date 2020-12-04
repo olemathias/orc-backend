@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from ipam.models import Network, Environment
+import shortuuid
 
 import re
 import ipaddress
@@ -15,16 +16,8 @@ class VmTemplate(models.Model):
     def __str__(self):
         return self.name
 
-class AWXTemplate(models.Model):
-    name = models.CharField(max_length=256)
-    config = models.JSONField()
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
-
 class Vm(models.Model):
+    id = models.CharField(primary_key=True, default=shortuuid.uuid, editable=False, max_length=22)
     environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
     name = models.CharField(max_length=256)
     config = models.JSONField()

@@ -2,8 +2,8 @@ from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from vm.models import Vm, VmTemplate, AWXTemplate
-from vm.serializers import VmSerializer, VmTemplateSerializer, AWXTemplateSerializer
+from vm.models import Vm, VmTemplate
+from vm.serializers import VmSerializer, VmTemplateSerializer
 from vm.jobs import update_vm_job, delete_vm_job
 from ipam.models import Network, Environment
 
@@ -13,10 +13,6 @@ from cerberus import Validator
 class VmTemplateViewSet(viewsets.ModelViewSet):
     queryset = VmTemplate.objects.all()
     serializer_class = VmTemplateSerializer
-
-class AWXTemplateViewSet(viewsets.ModelViewSet):
-    queryset = AWXTemplate.objects.all()
-    serializer_class = AWXTemplateSerializer
 
 class VmViewSet(viewsets.ModelViewSet):
     queryset = Vm.objects.all()
