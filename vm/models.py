@@ -19,7 +19,7 @@ class VmTemplate(models.Model):
 class Vm(models.Model):
     id = models.CharField(primary_key=True, default=shortuuid.uuid, editable=False, max_length=22)
     environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=64)
     config = models.JSONField()
     state = models.JSONField()
     network = models.ForeignKey(Network, on_delete=models.CASCADE)
@@ -37,15 +37,19 @@ class Vm(models.Model):
     @property
     def status(self):
         status = []
+        active_providers = self.environment.active_providers
         for key, state in self.state.items():
             if 'status' in state:
                 status.append(state['status'])
+        if 'destroying' in status:
+            return 'destroying'
+        for provider in active_providers:
+            if provider not in self.state:
+                return 'provisioning'
         if 'provisioning' in status:
             return 'provisioning'
         if 'error' in status:
             return 'error'
-        if 'destroying' in status:
-            return 'destroying'
         if 'provisioned' in status:
             return 'provisioned'
         return 'unknown'

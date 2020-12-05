@@ -32,6 +32,10 @@ class Environment(models.Model):
         secrets = ('token', 'ssh_authorized_keys', 'token_value', 'private_ssh_key', 'key', 'password')
         return remove_secrets(self.config, secrets)
 
+    @property
+    def active_providers(self):
+        return ['netbox', 'proxmox', 'powerdns', 'freeipa', 'awx']
+
     def netbox(self):
         return pynetbox.api(
             self.config['netbox']['url'],
