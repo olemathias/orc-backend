@@ -8,7 +8,7 @@ class VmSerializer(serializers.HyperlinkedModelSerializer):
     network = NetworkSerializerSummary(read_only=True)
     class Meta:
         model = Vm
-        fields = ['id', 'environment', 'name', 'fqdn', 'config', 'state', 'network', 'created', 'updated']
+        fields = ['id', 'environment', 'name', 'fqdn', 'status', 'config', 'state', 'network', 'created', 'updated']
 
 class VmTemplateSerializer(serializers.HyperlinkedModelSerializer):
     environment = EnvironmentSerializerSummary(read_only=True)

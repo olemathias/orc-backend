@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
             name='Vm',
             fields=[
                 ('id', models.CharField(default=shortuuid.main.ShortUUID.uuid, editable=False, max_length=22, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=256)),
+                ('name', models.CharField(max_length=64)),
                 ('config', models.JSONField()),
                 ('state', models.JSONField()),
                 ('created', models.DateTimeField(auto_now_add=True)),
