@@ -5,7 +5,7 @@
 # from django.views.decorators.csrf import csrf_exempt
 #
 # from vm.models import Vm
-# from ipam.models import Network, Environment
+# from ipam.models import Network, Platform
 # from vm.forms import VmForm
 #
 # from vm.jobs import update_vm_job, delete_vm_job
@@ -42,7 +42,7 @@
 #
 #     return JsonResponse({
 #         "id": vm.pk,
-#         "environment_id": vm.environment.pk,
+#         "platform_id": vm.platform.pk,
 #         "network_id": vm.network.id,
 #         "name": vm.name,
 #         "config": vm.config,
@@ -55,13 +55,13 @@
 #         return render(request, 'vms/create.html', {'form': form})
 #     elif request.method == "POST":
 #
-#         environment = Environment.objects.get(pk=request.POST['environment'])
+#         platform = Platform.objects.get(pk=request.POST['platform'])
 #         network = Network.objects.get(pk=request.POST['network'])
 #
 #         vm = Vm()
 #         vm.name = request.POST['name']
 #         vm.state = {}
-#         vm.environment = environment
+#         vm.platform = platform
 #         vm.network = network
 #
 #         ipv4 = IPNetwork(network.get_next_ip()['ipv4'])
@@ -88,7 +88,7 @@
 #                     "prefixlen": ipv6.prefixlen,
 #                     "gw": str(ipv6[1])
 #                 },
-#                 "domain": environment.config['domain'],
+#                 "domain": platform.config['domain'],
 #                 "firewall": True
 #             }
 #         }

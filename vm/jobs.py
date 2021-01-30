@@ -17,7 +17,7 @@ def delete_vm_job(id):
 @job
 def run_awx_template_job(id, template_id, template_name):
     vm = Vm.objects.get(id=id)
-    awx = vm.environment.awx()
+    awx = vm.platform.awx()
     template = awx.get_job_template_by_id(template_id)
     job = template.launch(limit=vm.fqdn)
     time.sleep(1) # To make sure job is registered

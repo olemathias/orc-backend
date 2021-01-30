@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from vm.models import Vm, VmTemplate
 from vm.serializers import VmSerializer, VmTemplateSerializer
 from vm.jobs import update_vm_job, delete_vm_job
-from ipam.models import Network, Environment
+from ipam.models import Network, Platform
 
 from netaddr import *
 from cerberus import Validator
@@ -21,16 +21,16 @@ class VmViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
         try:
-            environment = Environment.objects.get(pk=data['environment'])
+            platform = Platform.objects.get(pk=data['platform'])
         except Exception:
-            return Response({'status': 'failed', 'errors': 'Environment not found'}, status=400)
+            return Response({'status': 'failed', 'errors': 'Platform not found'}, status=400)
 
-        # TODO Support max values (mem, cpu, disk) overrides in environment
+        # TODO Support max values (mem, cpu, disk) overrides in platform
         schema = {
             'name': {'type': 'string', 'required': True, 'minlength': 3, 'maxlength': 63, 'regex': '^(?!-)[a-z\d-]{1,63}(?<!-)$'},
-            'environment': {'type': 'integer', 'required': True, 'allowed': list(Environment.objects.all().values_list('id', flat=True))},
-            'network': {'type': 'integer', 'required': True, 'allowed': list(Network.objects.filter(environment=data['environment']).values_list('id', flat=True))},
-            'vm_template': {'type': 'integer', 'required': True, 'allowed': list(VmTemplate.objects.filter(environment=data['environment']).values_list('id', flat=True))},
+            'platform': {'type': 'integer', 'required': True, 'allowed': list(Platform.objects.all().values_list('id', flat=True))},
+            'network': {'type': 'integer', 'required': True, 'allowed': list(Network.objects.filter(platform=data['platform']).values_list('id', flat=True))},
+            'vm_template': {'type': 'integer', 'required': True, 'allowed': list(VmTemplate.objects.filter(platform=data['platform']).values_list('id', flat=True))},
             'memory': {'type': 'integer', 'required': True, 'min': 1, 'max': 48},
             'cpu_cores': {'type': 'integer', 'required': True, 'min': 1, 'max': 12},
             'os_disk': {'type': 'integer', 'required': True, 'min': 16, 'max': 512}
@@ -45,7 +45,7 @@ class VmViewSet(viewsets.ModelViewSet):
         vm = Vm()
         vm.name = data['name'].lower()
         vm.state = {}
-        vm.environment = environment
+        vm.platform = platform
         vm.network = network
         vm.template = vm_template
 
@@ -72,7 +72,7 @@ class VmViewSet(viewsets.ModelViewSet):
                     "prefixlen": ipv6.prefixlen,
                     "gw": str(ipv6[1])
                 },
-                "domain": environment.config['domain'],
+                "domain": platform.config['domain'],
                 "firewall": True
             }
         }

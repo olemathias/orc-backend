@@ -1,29 +1,29 @@
 from rest_framework import serializers
 
-from ipam.models import Environment, Network
+from ipam.models import Platform, Network
 
-class EnvironmentSerializer(serializers.HyperlinkedModelSerializer):
+class PlatformSerializer(serializers.HyperlinkedModelSerializer):
     config = serializers.JSONField(source='stripped_config')
 
     class Meta:
-        model = Environment
+        model = Platform
         fields = ['id', 'name', 'config', 'state', 'created', 'updated']
 
-class EnvironmentSerializerSummary(serializers.HyperlinkedModelSerializer):
+class PlatformSerializerSummary(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = Environment
+        model = Platform
         fields = ['id', 'name']
 
 class NetworkSerializer(serializers.HyperlinkedModelSerializer):
-    environment = EnvironmentSerializerSummary(read_only=True)
+    platform = PlatformSerializerSummary(read_only=True)
 
     class Meta:
         model = Network
-        fields = ['id', 'environment', 'name', 'description', 'prefixes4', 'prefixes6', 'vid', 'config', 'state', 'created', 'updated']
+        fields = ['id', 'platform', 'name', 'description', 'prefixes4', 'prefixes6', 'vid', 'config', 'state', 'created', 'updated']
 
 class NetworkSerializerSummary(serializers.HyperlinkedModelSerializer):
-    environment = EnvironmentSerializerSummary(read_only=True)
+    platform = PlatformSerializerSummary(read_only=True)
 
     class Meta:
         model = Network
-        fields = ['id', 'environment', 'name', 'description', 'prefixes4', 'prefixes6', 'vid']
+        fields = ['id', 'platform', 'name', 'description', 'prefixes4', 'prefixes6', 'vid']

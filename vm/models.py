@@ -1,13 +1,13 @@
 from django.db import models
 from django.conf import settings
-from ipam.models import Network, Environment
+from ipam.models import Network, Platform
 import shortuuid
 
 import re
 import ipaddress
 
 class VmTemplate(models.Model):
-    environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     name = models.CharField(max_length=256)
     config = models.JSONField()
     created = models.DateTimeField(auto_now_add=True)
@@ -17,8 +17,8 @@ class VmTemplate(models.Model):
         return self.name
 
 class Vm(models.Model):
-    id = models.CharField(primary_key=True, default=shortuuid.uuid, editable=False, max_length=22)
-    environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
+    id = models.CharField(primary_key=True, default=shortuuid.main.ShortUUID.uuid, editable=False, max_length=22)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
     config = models.JSONField()
     state = models.JSONField()
@@ -26,18 +26,19 @@ class Vm(models.Model):
     template = models.ForeignKey(VmTemplate, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    deleted = models.DateTimeField(default=None, null=True)
 
     def __str__(self):
         return self.name
 
     @property
     def fqdn(self):
-        return "{}.{}".format(self.name, self.environment.config['domain'])
+        return "{}.{}".format(self.name, self.platform.config['domain'])
 
     @property
     def status(self):
         status = []
-        active_providers = self.environment.active_providers
+        active_providers = self.platform.active_providers
         for key, state in self.state.items():
             if 'status' in state:
                 status.append(state['status'])
@@ -59,9 +60,9 @@ class Vm(models.Model):
             return None, None
         pve_vm = None
         pve_node = None
-        for t in self.environment.proxmox().cluster.resources.get(type='vm'):
+        for t in self.platform.proxmox().cluster.resources.get(type='vm'):
             if t['type'] == 'qemu' and int(t['vmid']) == int(self.state['proxmox']['id']):
-                pve_node = self.environment.proxmox().nodes(t['node'])
+                pve_node = self.platform.proxmox().nodes(t['node'])
                 pve_vm = pve_node.qemu(self.state['proxmox']['id'])
                 self.state['proxmox']['node'] = t['node']
                 return pve_node, pve_vm
@@ -79,10 +80,10 @@ class Vm(models.Model):
         vm = None
         if 'netbox' not in self.state:
             self.state['netbox'] = {}
-            vm = self.environment.netbox().virtualization.virtual_machines.create(
+            vm = self.platform.netbox().virtualization.virtual_machines.create(
                 name=self.name,
-                site=self.environment.site_id,
-                cluster=self.environment.cluster_id,
+                site=self.platform.site_id,
+                cluster=self.platform.cluster_id,
                 role=self.config['role'],
                 vcpus=self.config['hw']['cpu_cores'],
                 memory=int(self.config['hw']['memory'])*1024,
@@ -93,20 +94,20 @@ class Vm(models.Model):
             self.save()
 
         if vm is None:
-            vm = self.environment.netbox().virtualization.virtual_machines.get(self.state['netbox']['id'])
+            vm = self.platform.netbox().virtualization.virtual_machines.get(self.state['netbox']['id'])
 
-        if self.environment.netbox().virtualization.interfaces.get(virtual_machine_id=vm.id, name="eth0") is None:
-            interface = self.environment.netbox().virtualization.interfaces.create(
+        if self.platform.netbox().virtualization.interfaces.get(virtual_machine_id=vm.id, name="eth0") is None:
+            interface = self.platform.netbox().virtualization.interfaces.create(
                 virtual_machine=vm.id,
                 name='eth0'
             )
-            ipv4 = self.environment.netbox().ipam.ip_addresses.create(
+            ipv4 = self.platform.netbox().ipam.ip_addresses.create(
                 assigned_object_type="virtualization.vminterface",
                 assigned_object_id=interface['id'],
                 address="{}/{}".format(self.config['net']['ipv4']['ip'], self.config['net']['ipv4']['prefixlen']),
                 status="active"
              )
-            ipv6 = self.environment.netbox().ipam.ip_addresses.create(
+            ipv6 = self.platform.netbox().ipam.ip_addresses.create(
                 assigned_object_type="virtualization.vminterface",
                 assigned_object_id=interface['id'],
                 address="{}/{}".format(self.config['net']['ipv6']['ip'], self.config['net']['ipv6']['prefixlen']),
@@ -130,7 +131,7 @@ class Vm(models.Model):
         return self.state['netbox']
 
     def update_proxmox(self):
-        proxmox = self.environment.proxmox()
+        proxmox = self.platform.proxmox()
         if 'proxmox' not in self.state:
             self.state['proxmox'] = {}
             self.save()
@@ -150,7 +151,7 @@ class Vm(models.Model):
         return self.state['proxmox']
 
     def update_powerdns(self):
-        fqdn = "{}.{}.".format(self.name, self.environment.config['domain'])
+        fqdn = "{}.{}.".format(self.name, self.platform.config['domain'])
         if 'powerdns' not in self.state:
             rrsets = []
             rrsets.append({
@@ -176,10 +177,10 @@ class Vm(models.Model):
                 "ttl": 900
             })
 
-            print(self.environment.powerdns().set_records(self.environment.config['domain']+".", rrsets))
+            print(self.platform.powerdns().set_records(self.platform.config['domain']+".", rrsets))
             self.state['powerdns'] = {}
             self.state['powerdns']['domains'] = {}
-            self.state['powerdns']['domains'][self.environment.config['domain']+"."] = rrsets
+            self.state['powerdns']['domains'][self.platform.config['domain']+"."] = rrsets
             self.save()
 
             # Hack to support custom in-addr.arpa zones.
@@ -191,7 +192,7 @@ class Vm(models.Model):
                 rdns_v4_zone = self.network.config['v4_rdns_zone']
                 v4_ptr = "{0}.{1}".format(m.group(4), rdns_v4_zone)
             else:
-                rdns_v4_zones = self.environment.powerdns().search("*.in-addr.arpa", 2000, "zone")
+                rdns_v4_zones = self.platform.powerdns().search("*.in-addr.arpa", 2000, "zone")
                 v4_ptr = ipaddress.IPv4Address(self.config['net']['ipv4']['ip']).reverse_pointer
                 rdns_v4_zone = None
                 for zone in [ sub['name'] for sub in rdns_v4_zones ]:
@@ -202,7 +203,7 @@ class Vm(models.Model):
                             rdns_v4_zone = zone
                             break
 
-            rdns_v6_zones = self.environment.powerdns().search("*.ip6.arpa", 2000, "zone")
+            rdns_v6_zones = self.platform.powerdns().search("*.ip6.arpa", 2000, "zone")
             v6_ptr = ipaddress.IPv6Address(self.config['net']['ipv6']['ip']).reverse_pointer
             rdns_v6_zone = None
             for zone in [ sub['name'] for sub in rdns_v6_zones ]:
@@ -227,7 +228,7 @@ class Vm(models.Model):
                     "ttl": 900
                 })
                 print(rrsets)
-                print(self.environment.powerdns().set_records(rdns_v4_zone, rrsets))
+                print(self.platform.powerdns().set_records(rdns_v4_zone, rrsets))
                 self.state['powerdns']['domains'][rdns_v4_zone] = rrsets
                 self.save()
 
@@ -245,7 +246,7 @@ class Vm(models.Model):
                     "ttl": 900
                 })
                 print(rrsets)
-                print(self.environment.powerdns().set_records(rdns_v6_zone, rrsets))
+                print(self.platform.powerdns().set_records(rdns_v6_zone, rrsets))
                 self.state['powerdns']['domains'][rdns_v6_zone] = rrsets
                 self.save()
 
@@ -254,24 +255,24 @@ class Vm(models.Model):
         return self.state['powerdns']
 
     def update_freeipa(self):
-        fqdn = "{}.{}".format(self.name, self.environment.config['domain'])
+        fqdn = "{}.{}".format(self.name, self.platform.config['domain'])
         if 'freeipa' not in self.state:
-            client = self.environment.freeipa()
+            client = self.platform.freeipa()
             print(client.host_add(fqdn, o_ip_address=self.config['net']['ipv4']['ip']))
             self.state['freeipa'] = {"fqdn": fqdn, "status": "provisioned", "hostgroups": []}
-            if 'default_hostgroups' in self.environment.config['freeipa']:
-                for hostgroup in self.environment.config['freeipa']['default_hostgroups']:
+            if 'default_hostgroups' in self.platform.config['freeipa']:
+                for hostgroup in self.platform.config['freeipa']['default_hostgroups']:
                     client.hostgroup_add_member(hostgroup, o_host=fqdn)
                     self.state['freeipa']['hostgroups'].append(hostgroup)
             self.save()
         return self.state['freeipa']
 
     def update_awx(self):
-        fqdn = "{}.{}".format(self.name, self.environment.config['domain'])
+        fqdn = "{}.{}".format(self.name, self.platform.config['domain'])
         if 'awx' not in self.state:
-            client = self.environment.awx()
-            client.create_host_in_inventory(inventory=self.environment.config['awx']['inventory'], name=fqdn, description="orc_managed", organization=self.environment.config['awx']['organization'])
-            self.state['awx'] = {"fqdn": fqdn, "inventory": self.environment.config['awx']['inventory']}
+            client = self.platform.awx()
+            client.create_host_in_inventory(inventory=self.platform.config['awx']['inventory'], name=fqdn, description="orc_managed", organization=self.platform.config['awx']['organization'])
+            self.state['awx'] = {"fqdn": fqdn, "inventory": self.platform.config['awx']['inventory']}
             self.state['awx']['status'] = "provisioned"
             self.save()
         if 'awx_templates' not in self.state:
@@ -319,14 +320,14 @@ class Vm(models.Model):
     def delete_from_netbox(self):
         if 'netbox' not in self.state or 'id' not in self.state['netbox']:
             return False
-        vm = self.environment.netbox().virtualization.virtual_machines.get(self.state['netbox']['id'])
+        vm = self.platform.netbox().virtualization.virtual_machines.get(self.state['netbox']['id'])
         vm.delete()
         del self.state['netbox']
         self.save()
         return True
 
     def delete_from_proxmox(self):
-        proxmox = self.environment.proxmox()
+        proxmox = self.platform.proxmox()
         if 'proxmox' not in self.state or 'id' not in self.state['proxmox'] or self.state['proxmox']['id'] is None:
             if 'proxmox' in self.state:
                 del self.state['proxmox']
@@ -349,7 +350,7 @@ class Vm(models.Model):
             for rrset in self.state['powerdns']['domains'][domain]:
                 rrset['changetype'] = "delete"
                 rrsets.append(rrset)
-            print(self.environment.powerdns().set_records(domain, rrsets))
+            print(self.platform.powerdns().set_records(domain, rrsets))
             del self.state['powerdns']['domains'][domain]
             self.save()
         del self.state['powerdns']
@@ -359,7 +360,7 @@ class Vm(models.Model):
     def delete_from_freeipa(self):
         if 'freeipa' not in self.state or 'fqdn' not in self.state['freeipa']:
             return False
-        print(self.environment.freeipa().host_del(self.state['freeipa']['fqdn']))
+        print(self.platform.freeipa().host_del(self.state['freeipa']['fqdn']))
         del self.state['freeipa']
         self.save()
         return True
@@ -367,8 +368,8 @@ class Vm(models.Model):
     def delete_from_awx(self):
         if 'awx' not in self.state or 'fqdn' not in self.state['awx'] or 'inventory' not in self.state['awx']:
             return False
-        client = self.environment.awx()
-        client.delete_inventory_host(inventory=self.state['awx']['inventory'], name=self.state['awx']['fqdn'], organization=self.environment.config['awx']['organization'])
+        client = self.platform.awx()
+        client.delete_inventory_host(inventory=self.state['awx']['inventory'], name=self.state['awx']['fqdn'], organization=self.platform.config['awx']['organization'])
         del self.state['awx']
         del self.state['awx_templates']
         self.save()

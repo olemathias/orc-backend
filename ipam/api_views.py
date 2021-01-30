@@ -2,19 +2,19 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ipam.models import Environment, Network
-from ipam.serializers import EnvironmentSerializer, NetworkSerializer
+from ipam.models import Platform, Network
+from ipam.serializers import PlatformSerializer, NetworkSerializer
 
 
-class EnvironmentViewSet(viewsets.ModelViewSet):
-    queryset = Environment.objects.all()
-    serializer_class = EnvironmentSerializer
+class PlatformViewSet(viewsets.ModelViewSet):
+    queryset = Platform.objects.all()
+    serializer_class = PlatformSerializer
 
     @action(detail=True)
     def get_ipa_hostgroups(self, request, pk):
-        environment = Environment.objects.get(pk=pk)
+        platform = Platform.objects.get(pk=pk)
         groups = []
-        for group in environment.freeipa().hostgroup_find()['result']:
+        for group in platform.freeipa().hostgroup_find()['result']:
             groups.append(group['cn'][0])
         return Response(groups)
 
