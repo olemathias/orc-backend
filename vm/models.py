@@ -17,7 +17,7 @@ class VmTemplate(models.Model):
         return self.name
 
 class Vm(models.Model):
-    id = models.CharField(primary_key=True, default=shortuuid.main.ShortUUID.uuid, editable=False, max_length=22)
+    id = models.CharField(primary_key=True, default=shortuuid.uuid, editable=False, max_length=22)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
     config = models.JSONField()
