@@ -20,7 +20,7 @@ def remove_secrets(obj, rubbish):
                   if item not in rubbish]
     return obj
 
-class Environment(models.Model):
+class Platform(models.Model):
     name = models.CharField(max_length=256)
     config = models.JSONField()
     state = models.JSONField()
@@ -81,7 +81,7 @@ class Environment(models.Model):
 
 # Create your models here.
 class Network(models.Model):
-    environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     config = models.JSONField()
     state = models.JSONField()
     created = models.DateTimeField(auto_now_add=True)
@@ -158,9 +158,9 @@ class Network(models.Model):
         }
 
     def fetch_from_netbox_vlan(self):
-        if self.nb_vlan is None:
-            self.nb_vlan = self.environment.netbox().ipam.vlans.get(self.state['netbox']['id'])
+        if self._nb_vlan is None:
+            self.nb_vlan = self.platform.netbox().ipam.vlans.get(self.state['netbox']['id'])
 
     def fetch_from_netbox_prefixes(self):
         if self.nb_prefixes is None:
-            self.nb_prefixes = self.environment.netbox().ipam.prefixes.filter(vlan_id=self.state['netbox']['id'])
+            self.nb_prefixes = self.platform.netbox().ipam.prefixes.filter(vlan_id=self.state['netbox']['id'])

@@ -5,11 +5,11 @@ from rest_framework import routers, serializers, viewsets
 from orc.jwt_token import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 from vm.api_views import VmViewSet, VmTemplateViewSet
-from ipam.api_views import EnvironmentViewSet, NetworkViewSet
+from ipam.api_views import PlatformViewSet, NetworkViewSet
 
 router = routers.DefaultRouter()
 router.register(r'vm', VmViewSet)
-router.register(r'environment', EnvironmentViewSet)
+router.register(r'platform', PlatformViewSet)
 router.register(r'network', NetworkViewSet)
 router.register(r'vm_template', VmTemplateViewSet)
 

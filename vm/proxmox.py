@@ -32,13 +32,13 @@ def create_qemu_vm_job(vm_id, pve_node_name):
     if 'proxmox' not in vm.state:
         vm.state['proxmox'] = {}
 
-    pve_node = vm.environment.proxmox().nodes(pve_node_name)
+    pve_node = vm.platform.proxmox().nodes(pve_node_name)
     pve_vm_template = find_pve_template(pve_node, vm.template)
     if pve_vm_template is None:
         raise Exception('VM Template not found, or more then one found')
     pve_vm_template_status = pve_vm_template.status().current.get()
 
-    pve_vm_id = vm.environment.proxmox().cluster.nextid.get()
+    pve_vm_id = vm.platform.proxmox().cluster.nextid.get()
     vm.state['proxmox']['id'] = pve_vm_id
     vm.state['proxmox']['status'] = "provisioning"
     vm.state['proxmox']['template'] = { pve_vm_template_status['vmid']: pve_vm_template_status['name'] }
@@ -67,9 +67,9 @@ def create_qemu_vm_job(vm_id, pve_node_name):
     new_vm.config.post(
         memory=int(vm.config['hw']['memory'])*1024,
         cores=int(vm.config['hw']['cpu_cores']),
-        net0="virtio,firewall={0},bridge={1},tag={2}".format(int(vm.config['net']['firewall']), vm.environment.config['proxmox']['nodes'][pve_node_name]['vmbridge'], vm.config['net']['vlan_id']),
+        net0="virtio,firewall={0},bridge={1},tag={2}".format(int(vm.config['net']['firewall']), vm.platform.config['proxmox']['nodes'][pve_node_name]['vmbridge'], vm.config['net']['vlan_id']),
         ipconfig0="gw={},gw6={},ip={},ip6={}".format(gw4, gw6, ip4, ip6),
-        searchdomain=vm.environment.config['domain'],
+        searchdomain=vm.platform.config['domain'],
         cicustom='user={}/cloudinit_user_{}.yaml'.format('local:snippets', pve_vm_id)
     )
     new_vm.resize.put(
@@ -156,15 +156,15 @@ def wait_for_job(node, pve_job_id):
     return task['status']
 
 def create_cloudinit_userdata(pve_node_name, vm):
-    node_config = vm.environment.config['proxmox']['nodes'][pve_node_name]
+    node_config = vm.platform.config['proxmox']['nodes'][pve_node_name]
 
     user = vm.template.config['user'] if 'user' in vm.template.config and vm.template.config['user'] is not None else 'debian'
 
     data = {
         'hostname': vm.name,
-        'fqdn': '{}.{}'.format(vm.name, vm.environment.config['domain']),
+        'fqdn': '{}.{}'.format(vm.name, vm.platform.config['domain']),
         'user': user,
-        'ssh_authorized_keys': vm.environment.config['proxmox']['ssh_authorized_keys'],
+        'ssh_authorized_keys': vm.platform.config['proxmox']['ssh_authorized_keys'],
         'chpasswd': {'expire': False},
         'users': ['default'],
         'package_upgrade': True,
@@ -219,7 +219,7 @@ def get_run_cmd(vm):
 
 
 def cleanup_cloudinit(pve_node_name, vm):
-    node_config = vm.environment.config['proxmox']['nodes'][pve_node_name]
+    node_config = vm.platform.config['proxmox']['nodes'][pve_node_name]
     userdata_file = '{}/cloudinit_user_{}.yaml'.format(node_config['userdata_location'], vm.state['proxmox']['id'])
 
     not_really_a_file = io.StringIO(node_config['private_ssh_key'])
