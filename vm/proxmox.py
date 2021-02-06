@@ -194,9 +194,13 @@ def create_cloudinit_userdata(pve_node_name, vm):
     return True
 
 def get_run_cmd(vm):
-    # TODO, Add support for more then debian based OSes, perhaps read this from config files
+    # TODO, Add support for more than debian based OS, read this from config files
     # TODO, we can add custom input here, between apt install and autoremove
-    additional_run_cmd = vm.template.config['additional_run_cmd'] if 'additional_run_cmd' in vm.template.config else []
+    additional_run_cmd = []
+    if 'additional_run_cmd' in vm.template.config:
+        additional_run_cmd += vm.template.config['additional_run_cmd']
+    if 'userdata' in vm.config:
+        additional_run_cmd += vm.config['userdata']
 
     pre = [
         'timedatectl set-timezone Europe/Oslo', # Remove hardcoded value

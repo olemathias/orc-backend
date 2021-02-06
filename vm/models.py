@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from ipam.models import Network, Platform
+from django_extensions.db.fields import ShortUUIDField
 import shortuuid
 
 import re
@@ -17,7 +18,7 @@ class VmTemplate(models.Model):
         return self.name
 
 class Vm(models.Model):
-    id = models.CharField(primary_key=True, default=shortuuid.uuid, editable=False, max_length=22)
+    id = ShortUUIDField(primary_key=True, unique=True, editable=False)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
     config = models.JSONField()
@@ -255,6 +256,8 @@ class Vm(models.Model):
         return self.state['powerdns']
 
     def update_freeipa(self):
+        if 'freeipa' not in self.platform.config:
+            return False
         fqdn = "{}.{}".format(self.name, self.platform.config['domain'])
         if 'freeipa' not in self.state:
             client = self.platform.freeipa()
@@ -268,6 +271,8 @@ class Vm(models.Model):
         return self.state['freeipa']
 
     def update_awx(self):
+        if 'awx' not in self.platform.config:
+            return False
         fqdn = "{}.{}".format(self.name, self.platform.config['domain'])
         if 'awx' not in self.state:
             client = self.platform.awx()
