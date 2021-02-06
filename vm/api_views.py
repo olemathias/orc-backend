@@ -33,7 +33,8 @@ class VmViewSet(viewsets.ModelViewSet):
             'vm_template': {'type': 'integer', 'required': True, 'allowed': list(VmTemplate.objects.filter(platform=data['platform']).values_list('id', flat=True))},
             'memory': {'type': 'integer', 'required': True, 'min': 1, 'max': 48},
             'cpu_cores': {'type': 'integer', 'required': True, 'min': 1, 'max': 12},
-            'os_disk': {'type': 'integer', 'required': True, 'min': 16, 'max': 512}
+            'os_disk': {'type': 'integer', 'required': True, 'min': 16, 'max': 512},
+            'userdata': {'type': 'list', 'required': False},
         }
         v = Validator(schema)
         if v.validate(data) is not True:
@@ -77,12 +78,16 @@ class VmViewSet(viewsets.ModelViewSet):
             }
         }
 
+        if 'userdata' in data and data['userdata'] is not None:
+            vm.config['userdata'] = data['userdata']
+
+        vm.save()
+
         vm.config["awx_templates"] = {
             "ipa_install": {"id": 10, "name": "Install IPAClient", "trigger": {"after_state": ["netbox", "proxmox", "awx", "freeipa", "powerdns"]}},
             #"docker_test": {"id": 12, "name": "Docker Test", "trigger": {"after_state": ["netbox", "proxmox", "awx", "freeipa", "powerdns"]}}
         }
 
-        vm.save()
         vm.update_netbox()
         update_vm_job.delay(vm.pk)
         return Response({'id': vm.pk, 'status': 'created'}, status=201)
