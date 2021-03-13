@@ -35,6 +35,7 @@ class VmViewSet(viewsets.ModelViewSet):
             'cpu_cores': {'type': 'integer', 'required': True, 'min': 1, 'max': 12},
             'os_disk': {'type': 'integer', 'required': True, 'min': 16, 'max': 512},
             'userdata': {'type': 'list', 'required': False},
+            'additional_net': {'type': 'dict', 'required': False},
         }
         v = Validator(schema)
         if v.validate(data) is not True:
@@ -77,6 +78,9 @@ class VmViewSet(viewsets.ModelViewSet):
                 "firewall": True
             }
         }
+
+        if 'additional_net' in data and data['additional_net'] is not None:
+            vm.config['additional_net'] = data['additional_net']
 
         if 'userdata' in data and data['userdata'] is not None:
             vm.config['userdata'] = data['userdata']
