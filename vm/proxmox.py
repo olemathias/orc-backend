@@ -98,6 +98,12 @@ def create_qemu_vm_job(vm_id, pve_node_name):
     new_vm.config.post(
         delete='scsi1'
     )
+
+    if 'additional_net' in vm.config:
+        new_vm.config.post(
+            net1="virtio,firewall={0},bridge={1},tag={2}".format(int(vm.config['additional_net']['firewall']), vm.config['additional_net']['vmbridge'], vm.config['additional_net']['vlan_id'])
+        )
+
     new_vm.status.start.post()
 
     vm.state['proxmox']['status'] = "provisioned"
