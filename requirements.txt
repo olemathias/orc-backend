@@ -16,3 +16,4 @@ django-cors-headers
 djangorestframework-simplejwt
 cerberus
 shortuuid
+django-extensions
