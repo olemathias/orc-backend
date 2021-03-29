@@ -136,8 +136,15 @@ class Vm(models.Model):
         if 'proxmox' not in self.state:
             self.state['proxmox'] = {}
             self.save()
+
+
+            # Get the first proxmox node - TODO Add option to pass node in create request
+            for key, value in self.platform.config['proxmox']['nodes'].items():
+                pve_node_name = key
+                break
+
             from vm.proxmox import create_qemu_vm_job
-            create_qemu_vm_job.delay(self.pk, 'pve1')
+            create_qemu_vm_job.delay(self.pk, pve_node_name)
 
         if 'proxmox' in self.state and 'id' in self.state['proxmox'] and self.state['proxmox']['id'] is not None:
             pve_node, pve_vm = self.get_pve_node_and_vm()
