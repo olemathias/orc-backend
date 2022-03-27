@@ -159,8 +159,8 @@ class Network(models.Model):
 
     def fetch_from_netbox_vlan(self):
         if self.nb_vlan is None:
-            self.nb_vlan = self.platform.netbox().ipam.vlans.get(self.state['netbox']['id'])
+            self.nb_vlan = list(self.platform.netbox().ipam.vlans.get(self.state['netbox']['id']))
 
     def fetch_from_netbox_prefixes(self):
         if self.nb_prefixes is None:
-            self.nb_prefixes = self.platform.netbox().ipam.prefixes.filter(vlan_id=self.state['netbox']['id'])
+            self.nb_prefixes = list(self.platform.netbox().ipam.prefixes.filter(vlan_id=self.state['netbox']['id']))
