@@ -14,6 +14,7 @@ from scp import SCPClient
 def find_pve_template(pve_node, template):
     pve_vm_templates = []
     for t in pve_node.qemu.get():
+        print(t['name'])
         if re.match(template.config['pve_template'], t['name']) is not None:
             pve_vm_templates.append(pve_node.qemu(t['vmid']))
 
@@ -33,6 +34,8 @@ def create_qemu_vm_job(vm_id, pve_node_name):
         vm.state['proxmox'] = {}
 
     pve_node = vm.platform.proxmox().nodes(pve_node_name)
+    if pve_node is None:
+        raise Exception('Failed to connect to pve node')
     pve_vm_template = find_pve_template(pve_node, vm.template)
     if pve_vm_template is None:
         raise Exception('VM Template not found, or more then one found')
