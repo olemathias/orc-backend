@@ -235,6 +235,7 @@ class Vm(models.Model):
                     }],
                     "ttl": 900
                 })
+                print(rdns_v4_zone)
                 print(rrsets)
                 print(self.platform.powerdns().set_records(rdns_v4_zone, rrsets))
                 self.state['powerdns']['domains'][rdns_v4_zone] = rrsets
@@ -253,6 +254,7 @@ class Vm(models.Model):
                     }],
                     "ttl": 900
                 })
+                print(rdns_v6_zone)
                 print(rrsets)
                 print(self.platform.powerdns().set_records(rdns_v6_zone, rrsets))
                 self.state['powerdns']['domains'][rdns_v6_zone] = rrsets
