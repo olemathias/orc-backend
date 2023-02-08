@@ -1,28 +1,22 @@
 from django.contrib import admin
-from django.urls import include, path
-
-from rest_framework import routers, serializers, viewsets
-from orc.jwt_token import TokenObtainPairView, TokenRefreshView, TokenVerifyView
-
-from vm.api_views import VmViewSet, VmTemplateViewSet
-from ipam.api_views import PlatformViewSet, NetworkViewSet
+from django.urls import path, include
+from rest_framework import routers
+from orc.access import views as access
+from orc.base import views as base
 
 router = routers.DefaultRouter()
-router.register(r'vm', VmViewSet)
-router.register(r'platform', PlatformViewSet)
-router.register(r'network', NetworkViewSet)
-router.register(r'vm_template', VmTemplateViewSet)
+
+# Access
+router.register(r'access/users', access.UserViewSet)
+router.register(r'access/groups', access.GroupViewSet)
+
+# Base
+router.register(r'platform', base.PlatformViewSet, basename = "platform")
+router.register(r'network', base.NetworkViewSet, basename = "network")
+router.register(r'instance', base.InstanceViewSet, basename = "instance")
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('api-token-auth/', TokenObtainPairView.as_view()),
-    path('api-token-refresh/', TokenRefreshView.as_view()),
-    path('api-token-verify/', TokenVerifyView.as_view())
-]
-
-# Misc
-urlpatterns += [
+    path('api/', include(router.urls)),
     path('admin/', admin.site.urls),
-    path('django-rq/', include('django_rq.urls')),
+    path('django-rq/', include('django_rq.urls'))
 ]

@@ -1,34 +1,7 @@
 version: "3"
 
 services:
-  db:
-    image: postgres
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=orc
-      - POSTGRES_USER=orc
-      - POSTGRES_PASSWORD=1234abc
-  backend:
-    build: .
-    container_name: orc-backend
-    environment:
-      - DB_NAME=orc
-      - DB_USER=orc
-      - DB_PASSWORD=1234abc
-      - DB_HOST=db
-      - RQ_QUEUES_HOST=redis
-  rqworker:
-    build: .
-    command: ["python", "manage.py", "rqworker"]
-    environment:
-      - DB_NAME=orc
-      - DB_USER=orc
-      - DB_PASSWORD=1234abc
-      - DB_HOST=db
-      - RQ_QUEUES_HOST=redis
   redis:
-    image: redis
-
-volumes:
-  db-data:
+    image: redis:6.2-alpine
+    ports:
+      - '127.0.0.1:6379:6379'
