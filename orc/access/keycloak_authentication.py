@@ -15,10 +15,10 @@ class KeycloakAuthentication(authentication.BaseAuthentication):
     def __init__(self, *args, **kwargs):
         # Configure client
         self.keycloak = keycloak.KeycloakOpenID(
-            server_url="https://sso.gathering.org",
-            client_id="orc",
-            realm_name="wannabe5-dev",
-            client_secret_key="pjynuSoJk5UVlJePrGBuvkFwAUCnFeFs"
+            server_url=settings.KEYCLOAK_SERVER_URL,
+            client_id=settings.KEYCLOAK_CLIENT_ID,
+            realm_name=settings.KEYCLOAK_REALM_NAME,
+            client_secret_key=settings.KEYCLOAK_CLIENT_SECRET_KEY
         )
 
         if(cache.get('keycloak_public_key') is None):
