@@ -16,3 +16,7 @@ python-freeipa
 towerlib
 paramiko
 scp
+python-keycloak
+pyyaml
+
+autopep8

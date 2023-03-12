@@ -6,7 +6,8 @@ STATUS = (
     ('error', 'Error'),
 )
 
-def get_tag_value(tags, tag, default = None):
+
+def get_tag_value(tags, tag, default=None):
     if tags is None:
         return default
     for item in tags:

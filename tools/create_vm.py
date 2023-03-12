@@ -15,10 +15,16 @@ auth_form = {
 }
 
 # Add error check
-jwt_token = requests.post('http://localhost:8000/api-token-auth/', json = auth_form).json()['access']
+jwt_token = requests.post(
+    'http://localhost:8000/api-token-auth/',
+    json=auth_form).json()['access']
 
 username = "techo"
-password = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(10))
+password = ''.join(
+    random.choice(
+        string.ascii_uppercase +
+        string.ascii_lowercase +
+        string.digits) for _ in range(10))
 
 userdata = [
     "useradd -s /usr/bin/bash -m -p $(openssl passwd -1 {}) {}".format(password, username),
@@ -29,7 +35,7 @@ userdata = [
 ]
 
 vm = {
-    "name":vm_name,
+    "name": vm_name,
     "platform": 2,
     "network": 2,
     "vm_template": 2,
@@ -40,8 +46,17 @@ vm = {
 }
 
 # Add error check
-vm_id = requests.post('http://localhost:8000/vm/', json = vm, headers={"Authorization": "JWT " + jwt_token}).json()['id']
-vm = requests.get('http://localhost:8000/vm/{}'.format(vm_id), headers={"Authorization": "JWT " + jwt_token}).json()
+vm_id = requests.post(
+    'http://localhost:8000/vm/',
+    json=vm,
+    headers={
+        "Authorization": "JWT " +
+        jwt_token}).json()['id']
+vm = requests.get(
+    'http://localhost:8000/vm/{}'.format(vm_id),
+    headers={
+        "Authorization": "JWT " +
+        jwt_token}).json()
 
 print("")
 print("Username: {}".format(username))

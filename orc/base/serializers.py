@@ -1,4 +1,4 @@
-from orc.base.models import Platform, Network, Instance, InstanceImage
+from orc.base.models import Platform, Network, Instance, InstanceTemplate
 from rest_framework import serializers
 
 
@@ -16,16 +16,16 @@ class InstanceSerializer(serializers.ModelSerializer):
         depth = 3
 
 
-class InstanceImageSerializer(serializers.ModelSerializer):
+class InstanceTemplateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = InstanceImage
+        model = InstanceTemplate
         fields = '__all__'
         depth = 3
 
 
 class PlatformSerializer(serializers.ModelSerializer):
     networks = NetworkSerializer(read_only=True, many=True)
-    instance_images = InstanceImageSerializer(read_only=True, many=True)
+    instance_images = InstanceTemplateSerializer(read_only=True, many=True)
 
     class Meta:
         model = Platform

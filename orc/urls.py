@@ -11,9 +11,9 @@ router.register(r'access/users', access.UserViewSet)
 router.register(r'access/groups', access.GroupViewSet)
 
 # Base
-router.register(r'platform', base.PlatformViewSet, basename = "platform")
-router.register(r'network', base.NetworkViewSet, basename = "network")
-router.register(r'instance', base.InstanceViewSet, basename = "instance")
+router.register(r'platform', base.PlatformViewSet, basename="platform")
+router.register(r'network', base.NetworkViewSet, basename="network")
+router.register(r'instance', base.InstanceViewSet, basename="instance")
 
 urlpatterns = [
     path('api/', include(router.urls)),

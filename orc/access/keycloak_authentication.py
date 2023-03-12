@@ -21,9 +21,9 @@ class KeycloakAuthentication(authentication.BaseAuthentication):
             client_secret_key=settings.KEYCLOAK_CLIENT_SECRET_KEY
         )
 
-        if(cache.get('keycloak_public_key') is None):
+        if (cache.get('keycloak_public_key') is None):
             self.public_key = "-----BEGIN PUBLIC KEY-----\n" + self.keycloak.public_key() + "\n-----END PUBLIC KEY-----"
-            cache.set('keycloak_public_key', self.public_key, 60*60)
+            cache.set('keycloak_public_key', self.public_key, 60 * 60)
         else:
             self.public_key = cache.get('keycloak_public_key')
         self.verify_options = {"verify_signature": True, "verify_aud": False, "verify_exp": True}
@@ -35,7 +35,7 @@ class KeycloakAuthentication(authentication.BaseAuthentication):
 
         match = self.regex_bearer.match(header_authorization_value)
         if not match:
-            raise rest_framework.exceptions.AuthenticationFailed("Authorization header must start with Bearer followed by its token")
+            return None
         raw_jwt = str(match.groups()[-1])
 
         try:
