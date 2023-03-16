@@ -54,6 +54,7 @@ def create_cloudinit_userdata(pve_node_name, instance):
             instance.name,
             instance.platform.dns_forward_provider_config['domain']
         ),
+        'prefer_fqdn_over_hostname': True,
         'user': user,
         'ssh_authorized_keys': instance.platform.vm_provider_config['ssh_authorized_keys'],
         'chpasswd': {
@@ -96,30 +97,23 @@ def create_cloudinit_userdata(pve_node_name, instance):
 
 
 def get_run_cmd(instance):
-    # TODO, Add support for more than debian based OS, read this from config files
-    # TODO, we can add custom input here, between apt install and autoremove
     additional_run_cmd = []
     if 'additional_run_cmd' in instance.template.vm_provider_state:
         additional_run_cmd += instance.template.vm_provider_state['additional_run_cmd']
-    if 'userdata' in instance.config:
+    if 'userdata' in instance.config and instance.config['userdata'] is not None:
         additional_run_cmd += instance.config['userdata']
 
-    pre = [
-        'timedatectl set-timezone Europe/Oslo',  # Remove hardcoded value
-        'sed -i -e "s/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/" /etc/locale.gen',
-        'sed -i -e "s/# nb_NO.UTF-8 UTF-8/nb_NO.UTF-8 UTF-8/" /etc/locale.gen',
-        'dpkg-reconfigure --frontend=noninteractive locales',
-        'update-locale LANG=en_US.UTF-8',
-        'update-locale LANGUAGE=en_US:en',
-        'touch /var/lib/cloud/instance/locale-check.skip',
-        'DEBIAN_FRONTEND=noninteractive apt install -q -y software-properties-common qemu-guest-agent'
-    ]
+    # FreeIPA
+    # ipa-client-install --domain ipa.msbone.net --password 4AiSasrvIGvuWob4cnlI6SS --mkhomedir --hostname ipa-test.msbone.cloud --server ipa1.msbone.net --unattended
+    if 'type' in instance.identity_management_provider_state and instance.identity_management_provider_state['type'] == 'freeipa':
+        domain = instance.platform.identity_management_provider_config['domain']
+        host = instance.platform.identity_management_provider_config['host']
+        joinpassword = instance.identity_management_provider_state['joinpassword']
+        fqdn = instance.identity_management_provider_state['fqdn']
+        additional_run_cmd += [f"ipa-client-install --domain {domain} --password {joinpassword} --hostname {fqdn} --server {host} --mkhomedir --unattended"]
 
-    late = [
-        'apt autoremove -y',
-        'rm /root/.ssh/authorized_keys',
-        'echo "network: {config: disabled}" > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg'
-    ]
+    pre = instance.template.vm_provider_state['pre_cmd'] if 'pre_cmd' in instance.template.vm_provider_state else []
+    late = instance.template.vm_provider_state['late_cmd'] if 'late_cmd' in instance.template.vm_provider_state else []
 
     return pre + additional_run_cmd + late
 
@@ -180,7 +174,8 @@ def create_qemu_vm(instance, pve_node_name="pve1"):
 
     pve_clone_job_id = pve_vm_template.clone.post(
         newid=pve_vm_id,
-        description="{}".format("just a test"),
+        # Markdown description
+        description="Orc VM: {}  \nPlatform: {}  \nNetwork: {}  \nTemplate: {}".format(instance.id, instance.platform.name, instance.network.name, instance.template.name),
         name=instance.name,
         full=1,
         target=pve_node_name

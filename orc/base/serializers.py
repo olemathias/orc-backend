@@ -25,7 +25,7 @@ class InstanceTemplateSerializer(serializers.ModelSerializer):
 
 class PlatformSerializer(serializers.ModelSerializer):
     networks = NetworkSerializer(read_only=True, many=True)
-    instance_images = InstanceTemplateSerializer(read_only=True, many=True)
+    instance_templates = InstanceTemplateSerializer(read_only=True, many=True)
 
     class Meta:
         model = Platform

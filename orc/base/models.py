@@ -4,6 +4,7 @@ from django_extensions.db.fields import ShortUUIDField
 import re
 import pynetbox
 import proxmoxer
+import python_freeipa
 
 from orc.base.providers.pdns_class import PowerDNS
 
@@ -50,13 +51,22 @@ class Platform(models.Model):
 
         if self.dns_forward_provider_config['type'] == 'pdns':
             return PowerDNS(self.dns_forward_provider_config['url'], self.dns_forward_provider_config['apikey'])
-        
+
     def dns_reverse(self):
         if self.dns_reverse_provider_config is None:
             return None
 
         if self.dns_reverse_provider_config['type'] == 'pdns':
             return PowerDNS(self.dns_reverse_provider_config['url'], self.dns_reverse_provider_config['apikey'])
+
+    def identity_management(self):
+        if self.identity_management_provider_config is None:
+            return None
+
+        if self.identity_management_provider_config['type'] == 'freeipa':
+            client = python_freeipa.ClientMeta(host=self.identity_management_provider_config['host'], verify_ssl=False)
+            client.login(self.identity_management_provider_config['user'], self.identity_management_provider_config['password'])
+            return client
 
     def vm(self):
         if self.vm_provider_config is None:
