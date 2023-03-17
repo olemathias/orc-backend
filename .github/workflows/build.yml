@@ -23,6 +23,8 @@ jobs:
           IMAGE_ID="ghcr.io/${{ github.repository }}"
           echo "APP_TAGS=$IMAGE_ID:latest" >> "$GITHUB_ENV"
           echo "STATIC_TAGS=$IMAGE_ID-static:latest" >> "$GITHUB_ENV"
+      - name: Set .env from .env.build
+        run: mv .env.build .env
       - name: Build app image
         uses: docker/build-push-action@v4
         with:
