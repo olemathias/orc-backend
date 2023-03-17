@@ -1,0 +1,43 @@
+name: Build
+on:
+  push:
+    branches: [main, djangorest]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Log in to the Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set tags
+        run: |
+          IMAGE_ID="ghcr.io/${{ github.repository }}"
+          echo "APP_TAGS=$IMAGE_ID:latest" >> "$GITHUB_ENV"
+          echo "STATIC_TAGS=$IMAGE_ID-static:latest" >> "$GITHUB_ENV"
+      - name: Build app image
+        uses: docker/build-push-action@v4
+        with:
+          file: Dockerfile
+          context: .
+          push: true
+          tags: ${{ env.APP_TAGS }}
+          platforms: linux/amd64
+          target: app
+      - name: Build static image
+        uses: docker/build-push-action@v4
+        with:
+          file: Dockerfile
+          context: .
+          push: true
+          tags: ${{ env.STATIC_TAGS }}
+          platforms: linux/amd64
+          target: static

@@ -1,5 +1,5 @@
 ###########
-# BUILDER #
+# App Build #
 ###########
 
 # pull official base image
@@ -20,13 +20,12 @@ RUN apk update \
 COPY ./requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
 
-
 #########
-# FINAL #
+# FINAL App #
 #########
 
 # pull official base image
-FROM python:3.10-alpine
+FROM python:3.10-alpine as app
 
 # create directory for the app user
 RUN mkdir -p /home/app
@@ -66,3 +65,18 @@ USER app
 # run entrypoint.prod.sh
 ENTRYPOINT ["/home/app/web/entrypoint.sh"]
 CMD ["gunicorn", "orc.wsgi:application", "--bind", "0.0.0.0:8000"]
+
+#########
+# Static Build #
+#########
+
+FROM app as static-build
+WORKDIR /home/app/web/
+RUN python manage.py collectstatic
+
+#########
+# FINAL Static #
+#########
+
+FROM nginx:latest as static
+COPY --from=static-build /home/app/web/static/ /usr/share/nginx/html/
