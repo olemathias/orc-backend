@@ -15,6 +15,7 @@ def create_host(instance):
     instance.identity_management_provider_state['fqdn'] = r['result']['fqdn'][0]
     instance.identity_management_provider_state['joinpassword'] = r['result']['randompassword']
     instance.identity_management_provider_state['dn'] = r['result']['dn']
+    instance.save()
 
     # client.hostgroup_add_member(hostgroup, o_host=fqdn)
     return True

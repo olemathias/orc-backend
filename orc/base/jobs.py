@@ -34,7 +34,7 @@ def create_instance_job(instance_id):
     if platform.vm_provider_config['type'] == 'pve':
         if instance.vm_provider_state is None or 'type' not in instance.vm_provider_state:
             instance.vm_provider_state = {'type': 'pve'}
-            proxmox.create_qemu_vm(instance, 'pve1')
+            proxmox.create_qemu_vm(instance)
 
     return True
 

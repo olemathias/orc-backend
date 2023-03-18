@@ -153,7 +153,11 @@ def get_pve_node_and_vm(instance):
     return None, None
 
 
-def create_qemu_vm(instance, pve_node_name="pve1"):
+def create_qemu_vm(instance, pve_node_name=None):
+    if pve_node_name is None:
+        # Get the first node
+        pve_node_name = list(instance.platform.vm_provider_config['nodes'].keys())[0]
+
     pve_node = instance.platform.vm().nodes(pve_node_name)
     if pve_node is None:
         raise Exception('Failed to connect to pve node')
@@ -166,8 +170,8 @@ def create_qemu_vm(instance, pve_node_name="pve1"):
     instance.vm_provider_state['id'] = pve_vm_id
     instance.vm_provider_state['status'] = "provisioning"
     instance.vm_provider_state['template'] = {
-        pve_vm_template_status['vmid']: pve_vm_template_status['name']}
-    instance.vm_provider_state['node'] = pve_node_name
+        pve_vm_template_status['vmid']: pve_vm_template_status['name']
+    }
     instance.save()
 
     create_cloudinit_userdata(pve_node_name, instance)
