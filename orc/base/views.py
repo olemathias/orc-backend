@@ -130,4 +130,4 @@ class InstanceViewSet(OrcViewSet):
 
     def destroy(self, request, pk=None):
         delete_instance_job.delay(pk)
-        return Response({'id': pk, 'status': 'deleting', 'message': 'Scheduled for deletion'}, status=204)
+        return Response({'id': pk, 'status': 'deleting', 'message': 'Scheduled for deletion'}, status=200)
