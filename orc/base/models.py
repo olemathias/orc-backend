@@ -64,8 +64,10 @@ class Platform(models.Model):
             return None
 
         if self.identity_management_provider_config['type'] == 'freeipa':
-            client = python_freeipa.ClientMeta(host=self.identity_management_provider_config['host'], verify_ssl=False)
-            client.login(self.identity_management_provider_config['user'], self.identity_management_provider_config['password'])
+            client = python_freeipa.ClientMeta(
+                host=self.identity_management_provider_config['host'], verify_ssl=False)
+            client.login(
+                self.identity_management_provider_config['user'], self.identity_management_provider_config['password'])
             return client
 
     def vm(self):

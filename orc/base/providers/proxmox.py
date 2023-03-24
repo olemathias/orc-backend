@@ -105,15 +105,18 @@ def get_run_cmd(instance):
 
     # FreeIPA
     # ipa-client-install --domain ipa.msbone.net --password 4AiSasrvIGvuWob4cnlI6SS --mkhomedir --hostname ipa-test.msbone.cloud --server ipa1.msbone.net --unattended
-    if 'type' in instance.identity_management_provider_state and instance.identity_management_provider_state['type'] == 'freeipa':
+    if instance.identity_management_provider_state is not None and 'type' in instance.identity_management_provider_state and instance.identity_management_provider_state['type'] == 'freeipa':
         domain = instance.platform.identity_management_provider_config['domain']
         host = instance.platform.identity_management_provider_config['host']
         joinpassword = instance.identity_management_provider_state['joinpassword']
         fqdn = instance.identity_management_provider_state['fqdn']
-        additional_run_cmd += [f"ipa-client-install --domain {domain} --password {joinpassword} --hostname {fqdn} --server {host} --mkhomedir --unattended"]
+        additional_run_cmd += [
+            f"ipa-client-install --domain {domain} --password {joinpassword} --hostname {fqdn} --server {host} --mkhomedir --unattended"]
 
-    pre = instance.template.vm_provider_state['pre_cmd'] if 'pre_cmd' in instance.template.vm_provider_state else []
-    late = instance.template.vm_provider_state['late_cmd'] if 'late_cmd' in instance.template.vm_provider_state else []
+    pre = instance.template.vm_provider_state['pre_cmd'] if 'pre_cmd' in instance.template.vm_provider_state else [
+    ]
+    late = instance.template.vm_provider_state['late_cmd'] if 'late_cmd' in instance.template.vm_provider_state else [
+    ]
 
     return pre + additional_run_cmd + late
 
@@ -156,7 +159,8 @@ def get_pve_node_and_vm(instance):
 def create_qemu_vm(instance, pve_node_name=None):
     if pve_node_name is None:
         # Get the first node
-        pve_node_name = list(instance.platform.vm_provider_config['nodes'].keys())[0]
+        pve_node_name = list(
+            instance.platform.vm_provider_config['nodes'].keys())[0]
 
     pve_node = instance.platform.vm().nodes(pve_node_name)
     if pve_node is None:
@@ -179,7 +183,8 @@ def create_qemu_vm(instance, pve_node_name=None):
     pve_clone_job_id = pve_vm_template.clone.post(
         newid=pve_vm_id,
         # Markdown description
-        description="Orc VM: {}  \nPlatform: {}  \nNetwork: {}  \nTemplate: {}".format(instance.id, instance.platform.name, instance.network.name, instance.template.name),
+        description="Orc VM: {}  \nPlatform: {}  \nNetwork: {}  \nTemplate: {}".format(
+            instance.id, instance.platform.name, instance.network.name, instance.template.name),
         name=instance.name,
         full=1,
         target=pve_node_name
