@@ -1,4 +1,4 @@
-django==4.2.5
+django==4.2.15
 djangorestframework==3.14.0
 django-extensions==3.2.3
 django_rq==2.8.1
