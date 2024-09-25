@@ -21,4 +21,4 @@ python-keycloak==2.16.6
 pyyaml==6.0.1
 
 autopep8==2.0.4
-gunicorn==21.2.0
+gunicorn==22.0.0
