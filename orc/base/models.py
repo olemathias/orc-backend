@@ -167,9 +167,10 @@ class Network(models.Model):
             nb_prefixes = list(
                 self.platform.ipam().ipam.prefixes.filter(
                     vlan_id=self.ipam_provider_state['vlan_id']))
-            if len(nb_prefixes) < 1:
+            if len(nb_prefixes) < 1 and nb_prefixes[0]['vrf'] is None:
                 return None
-            return nb_prefixes[0]['vrf']
+            vrf = nb_prefixes[0]['vrf']
+            return {"id": vrf["id"], "name": vrf["name"]}
 
 
 class InstanceTemplate(models.Model):

@@ -29,14 +29,14 @@ def create_vm(instance, data, vrf, ipv4, ipv6):
             assigned_object_id=ipam_instance_interface['id'],
             address=str(ipv4),
             status="active",
-            vrf=vrf
+            vrf=vrf["id"]
         )
         ipam_instance_ipv6 = instance.platform.ipam().ipam.ip_addresses.create(
             assigned_object_type="virtualization.vminterface",
             assigned_object_id=ipam_instance_interface['id'],
             address=str(ipv6),
             status="active",
-            vrf=vrf
+            vrf=vrf["id"]
         )
         ipam_instance_vm.primary_ip4 = ipam_instance_ipv4['id']
         ipam_instance_vm.primary_ip6 = ipam_instance_ipv6['id']
