@@ -1,4 +1,4 @@
-def create_vm(instance, data, ipv4, ipv6):
+def create_vm(instance, data, vrf, ipv4, ipv6):
     ipam_instance_vm = None
     if instance.ipam_provider_state is None:
         instance.ipam_provider_state = {}
@@ -28,13 +28,15 @@ def create_vm(instance, data, ipv4, ipv6):
             assigned_object_type="virtualization.vminterface",
             assigned_object_id=ipam_instance_interface['id'],
             address=str(ipv4),
-            status="active"
+            status="active",
+            vrf=vrf
         )
         ipam_instance_ipv6 = instance.platform.ipam().ipam.ip_addresses.create(
             assigned_object_type="virtualization.vminterface",
             assigned_object_id=ipam_instance_interface['id'],
             address=str(ipv6),
-            status="active"
+            status="active",
+            vrf=vrf
         )
         ipam_instance_vm.primary_ip4 = ipam_instance_ipv4['id']
         ipam_instance_vm.primary_ip6 = ipam_instance_ipv6['id']
