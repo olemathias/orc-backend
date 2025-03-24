@@ -28,7 +28,8 @@ DEBUG = env('DEBUG')
 SECRET_KEY = env('SECRET_KEY')
 
 ALLOWED_HOSTS = env('ALLOWED_HOSTS', default='*').split(' ')
-CSRF_TRUSTED_ORIGINS = env('CSRF_TRUSTED_ORIGINS', default='http://*').split(' ')
+CSRF_TRUSTED_ORIGINS = env('CSRF_TRUSTED_ORIGINS',
+                           default='http://*').split(' ')
 FORCE_SCRIPT_NAME = env('FORCE_SCRIPT_NAME', default=None)
 
 INSTALLED_APPS = [

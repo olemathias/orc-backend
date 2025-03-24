@@ -159,6 +159,18 @@ class Network(models.Model):
             "ipv6": ipv6
         }
 
+    def get_vrf(self):
+        if self.platform.ipam_provider_config is None or self.ipam_provider_state is None and self.platform.ipam_provider_config['type'] != 'netbox':
+            return None
+
+        if self.platform.ipam_provider_config['type'] == 'netbox' and 'vlan_id' in self.ipam_provider_state:
+            nb_prefixes = list(
+                self.platform.ipam().ipam.prefixes.filter(
+                    vlan_id=self.ipam_provider_state['vlan_id']))
+            if len(nb_prefixes) < 1:
+                return None
+            return nb_prefixes[0]['vrf']
+
 
 class InstanceTemplate(models.Model):
     id = ShortUUIDField(primary_key=True, unique=True, editable=False)

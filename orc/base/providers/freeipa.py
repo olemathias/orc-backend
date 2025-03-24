@@ -9,7 +9,8 @@ def create_host(instance):
         instance.name,
         instance.platform.dns_forward_provider_config['domain']
     )
-    r = client.host_add(fqdn, o_ip_address=str(IPNetwork(ip4).ip), o_random=True)
+    r = client.host_add(fqdn, o_ip_address=str(
+        IPNetwork(ip4).ip), o_random=True)
 
     instance.identity_management_provider_state['status'] = 'provisioned'
     instance.identity_management_provider_state['fqdn'] = r['result']['fqdn'][0]

@@ -111,6 +111,7 @@ class InstanceViewSet(OrcViewSet):
 
         ipv4 = IPNetwork(network.get_next_ip()['ipv4'])
         ipv6 = IPNetwork(network.get_next_ip()['ipv6'])
+        vrf = network.get_vrf()
 
         instance.config = {
             "memory": int(data['memory']),
@@ -121,7 +122,7 @@ class InstanceViewSet(OrcViewSet):
         }
 
         if platform.ipam_provider_config['type'] == 'netbox':
-            netbox_create_vm(instance, data, ipv4, ipv6)
+            netbox_create_vm(instance, data, vrf, ipv4, ipv6)
         instance.save()
 
         create_instance_job.delay(instance.pk)

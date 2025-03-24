@@ -5,9 +5,12 @@ from netaddr import IPNetwork
 
 
 def create_forward_instance(instance):
-    fqdn = "{}.{}.".format(instance.name, instance.platform.dns_forward_provider_config['domain'])
-    ipv4 = str(IPNetwork(instance.ipam_provider_state['ip_addresses'][0]['address']).ip)
-    ipv6 = str(IPNetwork(instance.ipam_provider_state['ip_addresses'][1]['address']).ip)
+    fqdn = "{}.{}.".format(
+        instance.name, instance.platform.dns_forward_provider_config['domain'])
+    ipv4 = str(
+        IPNetwork(instance.ipam_provider_state['ip_addresses'][0]['address']).ip)
+    ipv6 = str(
+        IPNetwork(instance.ipam_provider_state['ip_addresses'][1]['address']).ip)
     rrsets = []
     rrsets.append({
         "name": fqdn,
@@ -41,7 +44,8 @@ def create_forward_instance(instance):
 
 
 def create_reverse_instance(instance):
-    fqdn = "{}.{}.".format(instance.name, instance.platform.dns_forward_provider_config['domain'])
+    fqdn = "{}.{}.".format(
+        instance.name, instance.platform.dns_forward_provider_config['domain'])
     ipv4 = instance.ipam_provider_state['ip_addresses'][0]['address']
     ipv6 = instance.ipam_provider_state['ip_addresses'][1]['address']
     instance.dns_reverse_provider_state['rrsets'] = {}
@@ -56,7 +60,8 @@ def create_reverse_instance(instance):
         v4_ptr = "{0}.{1}".format(m.group(4), rdns_v4_zone)
     else:
         v4_ptr = ipaddress.IPv4Address(str(IPNetwork(ipv4).ip)).reverse_pointer
-        rdns_v4_zones = instance.platform.dns_reverse().search("*{}.in-addr.arpa".format(str(v4_ptr).split('.')[3]), 2000, "zone")
+        rdns_v4_zones = instance.platform.dns_reverse().search(
+            "*{}.in-addr.arpa".format(str(v4_ptr).split('.')[3]), 2000, "zone")
         rdns_v4_zone = None
         rdns_v4_zone_accuracy = 30
         for zone in [sub['name'] for sub in rdns_v4_zones]:

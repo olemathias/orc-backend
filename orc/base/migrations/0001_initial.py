@@ -16,14 +16,19 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Platform',
             fields=[
-                ('id', django_extensions.db.fields.ShortUUIDField(blank=True, editable=False, primary_key=True, serialize=False, unique=True)),
+                ('id', django_extensions.db.fields.ShortUUIDField(
+                    blank=True, editable=False, primary_key=True, serialize=False, unique=True)),
                 ('name', models.CharField(max_length=64)),
                 ('ipam_provider_config', models.JSONField()),
-                ('dns_forward_provider_config', models.JSONField(blank=True, null=True)),
-                ('dns_reverse_provider_config', models.JSONField(blank=True, null=True)),
+                ('dns_forward_provider_config',
+                 models.JSONField(blank=True, null=True)),
+                ('dns_reverse_provider_config',
+                 models.JSONField(blank=True, null=True)),
                 ('vm_provider_config', models.JSONField(blank=True, null=True)),
-                ('configuration_management_provider_config', models.JSONField(blank=True, null=True)),
-                ('identity_management_provider_config', models.JSONField(blank=True, null=True)),
+                ('configuration_management_provider_config',
+                 models.JSONField(blank=True, null=True)),
+                ('identity_management_provider_config',
+                 models.JSONField(blank=True, null=True)),
                 ('tags', models.JSONField(blank=True, null=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
@@ -32,49 +37,64 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Network',
             fields=[
-                ('id', django_extensions.db.fields.ShortUUIDField(blank=True, editable=False, primary_key=True, serialize=False, unique=True)),
+                ('id', django_extensions.db.fields.ShortUUIDField(
+                    blank=True, editable=False, primary_key=True, serialize=False, unique=True)),
                 ('name', models.CharField(max_length=64)),
-                ('dns_reverse_provider_config', models.JSONField(blank=True, null=True)),
+                ('dns_reverse_provider_config',
+                 models.JSONField(blank=True, null=True)),
                 ('ipam_provider_state', models.JSONField()),
                 ('vm_provider_state', models.JSONField(blank=True, null=True)),
-                ('dns_reverse_provider_state', models.JSONField(blank=True, null=True)),
+                ('dns_reverse_provider_state',
+                 models.JSONField(blank=True, null=True)),
                 ('tags', models.JSONField(blank=True, null=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
-                ('platform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='base.platform')),
+                ('platform', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='base.platform')),
             ],
         ),
         migrations.CreateModel(
             name='InstanceTemplate',
             fields=[
-                ('id', django_extensions.db.fields.ShortUUIDField(blank=True, editable=False, primary_key=True, serialize=False, unique=True)),
+                ('id', django_extensions.db.fields.ShortUUIDField(
+                    blank=True, editable=False, primary_key=True, serialize=False, unique=True)),
                 ('name', models.CharField(max_length=64)),
                 ('vm_provider_state', models.JSONField(blank=True, null=True)),
                 ('tags', models.JSONField(blank=True, null=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
-                ('platform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='base.platform')),
+                ('platform', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='base.platform')),
             ],
         ),
         migrations.CreateModel(
             name='Instance',
             fields=[
-                ('id', django_extensions.db.fields.ShortUUIDField(blank=True, editable=False, primary_key=True, serialize=False, unique=True)),
+                ('id', django_extensions.db.fields.ShortUUIDField(
+                    blank=True, editable=False, primary_key=True, serialize=False, unique=True)),
                 ('name', models.CharField(max_length=64)),
                 ('config', models.JSONField()),
                 ('tags', models.JSONField(blank=True, null=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
-                ('ipam_provider_state', models.JSONField(blank=True, default=None, null=True)),
-                ('dns_forward_provider_state', models.JSONField(blank=True, null=True)),
-                ('dns_reverse_provider_state', models.JSONField(blank=True, null=True)),
+                ('ipam_provider_state', models.JSONField(
+                    blank=True, default=None, null=True)),
+                ('dns_forward_provider_state',
+                 models.JSONField(blank=True, null=True)),
+                ('dns_reverse_provider_state',
+                 models.JSONField(blank=True, null=True)),
                 ('vm_provider_state', models.JSONField(blank=True, null=True)),
-                ('configuration_management_provider_state', models.JSONField(blank=True, null=True)),
-                ('identity_management_provider_state', models.JSONField(blank=True, null=True)),
+                ('configuration_management_provider_state',
+                 models.JSONField(blank=True, null=True)),
+                ('identity_management_provider_state',
+                 models.JSONField(blank=True, null=True)),
                 ('step', models.CharField(max_length=64)),
-                ('network', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='base.network')),
-                ('platform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='base.platform')),
-                ('template', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='base.instancetemplate')),
+                ('network', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='base.network')),
+                ('platform', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='base.platform')),
+                ('template', models.ForeignKey(
+                    null=True, on_delete=django.db.models.deletion.CASCADE, to='base.instancetemplate')),
             ],
         ),
     ]

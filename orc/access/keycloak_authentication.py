@@ -22,11 +22,13 @@ class KeycloakAuthentication(authentication.BaseAuthentication):
         )
 
         if (cache.get('keycloak_public_key') is None):
-            self.public_key = "-----BEGIN PUBLIC KEY-----\n" + self.keycloak.public_key() + "\n-----END PUBLIC KEY-----"
+            self.public_key = "-----BEGIN PUBLIC KEY-----\n" + \
+                self.keycloak.public_key() + "\n-----END PUBLIC KEY-----"
             cache.set('keycloak_public_key', self.public_key, 60 * 60)
         else:
             self.public_key = cache.get('keycloak_public_key')
-        self.verify_options = {"verify_signature": True, "verify_aud": False, "verify_exp": True}
+        self.verify_options = {"verify_signature": True,
+                               "verify_aud": False, "verify_exp": True}
 
     def authenticate(self, request: HttpRequest):
         header_authorization_value = request.headers.get("authorization")
@@ -39,7 +41,8 @@ class KeycloakAuthentication(authentication.BaseAuthentication):
         raw_jwt = str(match.groups()[-1])
 
         try:
-            token_info = self.keycloak.decode_token(raw_jwt, key=self.public_key, options=self.verify_options)
+            token_info = self.keycloak.decode_token(
+                raw_jwt, key=self.public_key, options=self.verify_options)
         except jose.exceptions.ExpiredSignatureError as e:
             raise rest_framework.exceptions.AuthenticationFailed(str(e))
         except jose.exceptions.JWTError as e:
@@ -49,6 +52,7 @@ class KeycloakAuthentication(authentication.BaseAuthentication):
             user = User.objects.get(username=token_info['preferred_username'])
         except User.DoesNotExist:
             # Create user if do not exist
-            user = User.objects.create_user(token_info['preferred_username'], token_info['email'])
+            user = User.objects.create_user(
+                token_info['preferred_username'], token_info['email'])
 
         return (user, None)

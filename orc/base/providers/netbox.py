@@ -71,6 +71,7 @@ def delete_vm(instance):
     if 'type' in instance.ipam_provider_state and instance.ipam_provider_state['type'] == 'netbox' and 'vm_id' in instance.ipam_provider_state and instance.ipam_provider_state['vm_id'] is None:
         return False
 
-    vm = instance.platform.ipam().virtualization.virtual_machines.get(instance.ipam_provider_state['vm_id'])
+    vm = instance.platform.ipam().virtualization.virtual_machines.get(
+        instance.ipam_provider_state['vm_id'])
     vm.delete()
     return True
