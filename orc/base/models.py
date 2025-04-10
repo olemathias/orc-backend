@@ -170,6 +170,8 @@ class Network(models.Model):
             if len(nb_prefixes) < 1 and nb_prefixes[0]['vrf'] is None:
                 return None
             vrf = nb_prefixes[0]['vrf']
+            if vrf is None:
+                return None
             return {"id": vrf["id"], "name": vrf["name"]}
 
 
